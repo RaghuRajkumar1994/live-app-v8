@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Worker Input</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; max-width: 400px; margin: auto; }
+        input, select, button { width: 100%; padding: 10px; margin-bottom: 10px; box-sizing: border-box; }
+        button { background-color: #4CAF50; color: white; border: none; cursor: pointer; }
+        button:hover { background-color: #45a049; }
+        .message { text-align: center; color: green; font-weight: bold; margin-top: 15px; }
+    </style>
+</head>
+<body>
+    <h1>Production Entry</h1>
+
+    <label for="worker-id">Worker:</label>
+    <select id="worker-id">
+        <option value="Worker A">Worker A</option>
+        <option value="Worker B">Worker B</option>
+        <option value="Worker C">Worker C</option>
+    </select>
+
+    <label for="output-value">Output Quantity:</label>
+    <input type="number" id="output-value" placeholder="Enter quantity" required min="1">
+
+    <button onclick="submitOutput()">Submit Output</button>
+
+    <div id="message" class="message"></div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        // Connect to the Socket.IO server
+        const socket = io();
+        
+        function submitOutput() {
+            const workerId = document.getElementById('worker-id').value;
+            const outputValue = document.getElementById('output-value').value;
+            const messageElement = document.getElementById('message');
+
+            if (outputValue === '' || parseInt(outputValue) <= 0) {
+                alert('Please enter a valid quantity.');
+                return;
+            }
+
+            // Send the data to the server
+            socket.emit('submit_output', { 
+                workerId: workerId, 
+                output: outputValue 
+            });
+
+            // Clear the input field and show a confirmation message
+            document.getElementById('output-value').value = '';
+            messageElement.textContent = 'Output submitted successfully!';
+            setTimeout(() => { messageElement.textContent = ''; }, 3000); 
+        }
+    </script>
+</body>
+</html>

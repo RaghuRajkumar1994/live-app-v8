@@ -1,0 +1,2631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Production Data</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #f4f7f9; 
+            color: #333;
+            /* min-height: 100vh; -- REMOVED to allow page to scroll */
+        }
+        .main-container {
+            margin: auto; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        /* --- UPDATED HEADER & LOGO STYLES --- */
+.header-container {
+    display: grid;
+    /* Creates 3 columns: Logo (Left), Title (Center), Empty (Balance) */
+    grid-template-columns: 1fr auto 1fr; 
+    align-items: center;
+    width: 100%;
+    border-bottom: 3px solid #3B82F6;
+    margin-bottom: 15px;
+    /* Sticky Header */
+    position: sticky;
+    top: 0;
+    z-index: 40; /* Below floating buttons (z-50) and modals */
+    background-color: #f4f7f9; /* Match body background to hide content scrolling under */
+    padding: 10px 20px;
+}
+
+/* Updated h1 to remove the old border and centering logic */
+h1 { 
+    color: #172554; /* More Dark: Blue-950 */
+    background-color: #DBEAFE; /* Good Background: Blue-100 */
+    padding: 10px 30px;
+    border-radius: 12px;
+    text-align: center; 
+    margin: 0; 
+    font-size: 5rem; /* Big Title */
+    font-weight: 900;
+    text-transform: uppercase;
+    grid-column: 2; /* Forces title to middle column */
+    letter-spacing: -0.02em;
+    text-shadow: 0 1px 0 rgba(0,0,0,0.06);
+}
+
+/* Responsive: scale down title on small screens */
+@media (max-width: 768px) {
+    h1 { font-size: 2rem; }
+}
+@media (min-width: 769px) and (max-width: 1200px) {
+    h1 { font-size: 3.5rem; }
+}
+
+.text-logo {
+    line-height: 0.9;
+    font-weight: 700;
+    text-align: left;
+    grid-column: 1; /* Forces logo to far left */
+}
+
+.text-logo .amphenol {
+    color: #3B82F6;
+    font-size: 1.5rem;
+    display: block;
+}
+
+.text-logo .automotive {
+    color: #F97316;
+    font-size: 0.75rem;
+    display: block;
+    /* Aligns 'Automotive' to start under the 'h' of Amphenol */
+    margin-left: 58px; 
+    margin-top: -2px;
+}
+        
+        .card { 
+            background-color: #FFFAF0; 
+            padding: 20px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            width: 100%;
+        }
+        
+        .card h2 {
+            text-align: center;
+        }
+        
+        label { display: block; margin-top: 5px; font-weight: 600; color: #4B5563; font-size: 0.85rem; }
+        
+        input:not(#produced-qty):not(#produced-length):not(#qty-produced-hours), select { 
+            width: 100%; 
+            padding: 7px; 
+            margin-bottom: 5px; 
+            box-sizing: border-box; 
+            border-radius: 6px; 
+            border: 1px solid #D1D5DB; 
+            font-size: 14px; 
+            transition: all 0.2s ease-in-out, box-shadow 0.2s ease-in-out; 
+        }
+        
+        input:focus, select:focus { 
+            border-color: #3B82F6; 
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25); 
+        }
+        
+        input[readonly] {
+            background-color: #E5E7EB; 
+            cursor: default;
+            color: #4B5563; 
+        }
+
+        /* --- NEW VALIDATION STYLES (3-Color Concept) --- */
+        .exact-match-input { /* Green: Exact match */
+            border-color: #10B981 !important; 
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25) !important;
+        }
+        .tolerable-match-input { /* Orange: Not exact, but accepted (within tolerance or > min pull force) */
+            border-color: #F59E0B !important; 
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25) !important;
+        }
+        .invalid-manual-input { /* Red: Data not match (Outside tolerance or < min pull force) */
+            border-color: #EF4444 !important; /* Red */
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.25) !important;
+        }
+        /* --- END NEW VALIDATION STYLES --- */
+
+        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
+        .btn-group button { 
+            flex: 1; 
+            padding: 10px; 
+            font-weight: bold; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            transition: background-color 0.2s, box-shadow 0.2s;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+        }
+        #submit-button { background-color: #10B981; color: white; }
+        #submit-button:hover { background-color: #059669; box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);}
+        #reset-button { background-color: #EF4444; color: white; }
+        #reset-button:hover { background-color: #DC2626; box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);}
+        .message { text-align: center; font-weight: bold; margin-top: 15px; padding: 8px; border-radius: 4px; font-size: 0.9rem; }
+        
+        .input-row { display: flex; gap: 10px; margin-bottom: 5px; }
+        .input-row > div { flex: 1; } 
+        
+        .input-row-qty { 
+            margin-top: 15px; 
+            margin-bottom: 10px; 
+        }
+
+        .input-row-qty > div > input {
+            min-width: 100px; 
+            font-size: 1.0rem; 
+            padding: 10px 8px; 
+            text-align: center; 
+            font-weight: 700; 
+            /* STYLES MODIFIED FOR LIGHT DARK GREEN */
+            background-color: #E6F7E6; 
+            border-color: #047857; 
+            color: #047857;
+            transition: all 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .input-row-qty label {
+            text-align: center;
+            font-size: 0.85rem;
+            color: #065F46; 
+            font-weight: 700;
+        }
+        
+        #plan-sheet-container { 
+            border: 2px solid #3B82F6; 
+            border-radius: 8px; 
+            padding: 15px;
+            background-color: #EFF6FF;
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden; 
+            /* flex-grow: 1; max-height: 100%; - REMOVED to allow content to dictate height */
+        }
+        #plan-data-view {
+            /* flex-grow: 1; overflow-y: auto; - REMOVED to allow content to grow without internal scrollbar */
+            margin-top: 10px;
+        }
+
+        #plan-sheet-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        #plan-sheet-table th, #plan-sheet-table td {
+            padding: 8px 6px;
+            text-align: left;
+            border-bottom: 1px solid #E5E7EB;
+            white-space: nowrap; 
+        }
+        #plan-sheet-table th {
+            background-color: #DBEAFE; 
+            color: #1E40AF; 
+            font-weight: 700;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        /* Offset sticky table header by the height of the main sticky header */
+        body > .header-container + .main-content-grid #plan-sheet-table th {
+            /* Approx. Header Height: 10px pad + 100px h1 + 10px pad + 3px border = ~123px */
+            top: 125px; 
+        }
+        #plan-sheet-table tr.plan-completed {
+            background-color: #ECFDF5; 
+            color: #065F46; 
+            opacity: 0.7;
+        }
+        .plan-completed td {
+            text-decoration: line-through;
+        }
+
+        .complete-button {
+            padding: 6px 12px;
+            font-weight: 600;
+            border-radius: 4px;
+            transition: all 0.2s;
+            font-size: 0.8rem;
+            cursor: pointer;
+            min-width: 100px; 
+        }
+
+        .complete-button-pending {
+            background-color: #3B82F6; 
+            color: white;
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+        }
+        .complete-button-pending:hover {
+            background-color: #2563EB; 
+        }
+        .complete-button-completed {
+            background-color: #10B981; 
+            color: white;
+            opacity: 0.5;
+            cursor: default;
+        }
+        .plan-title {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1D4ED8; 
+            padding-bottom: 8px;
+            border-bottom: 2px solid #BFDBFE; 
+        }
+        /* Highlight for selected archived history entry and queued list selection */
+        #plan-history-list .selected-entry,
+        #queued-list .selected-entry {
+            background-color: #EEF2FF;
+        }
+        
+        .terminal-box {
+            border: 1px solid #D1D5DB; 
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 15px;
+            background-color: #F5FFFA;
+        }
+
+        .title-and-id-row {
+            display: flex;
+            align-items: flex-end; 
+            gap: 10px;
+            width: fit-content; 
+            margin: 5px auto 10px auto; 
+            border-bottom: 1px solid #E5E7EB; 
+            padding-bottom: 5px;
+        }
+        .title-and-id-row h3 {
+            font-size: 1.0rem; 
+            font-weight: 700;
+            color: #1F2937;
+            margin: 0; 
+            padding: 0;
+            flex-shrink: 0; 
+            line-height: 1.25rem; 
+        }
+        .title-and-id-row .terminal-id-input-group {
+            flex-grow: 0; 
+            width: 180px; 
+        }
+        .title-and-id-row .terminal-id-input-group label {
+            display: none; 
+        }
+        .title-and-id-row .terminal-id-input-group input {
+            margin-bottom: 0;
+            padding: 5px 7px; 
+        }
+
+
+        .input-row-8col { 
+            display: grid; 
+            grid-template-columns: repeat(8, 1fr); 
+            gap: 10px; 
+            margin-bottom: 5px;
+        }
+        .input-row-pull-force { 
+            display: grid; 
+            grid-template-columns: repeat(4, 1fr); 
+            gap: 10px; 
+            margin-bottom: 10px;
+        }
+        .input-row-8col > div, .input-row-pull-force > div { 
+            margin-bottom: 0;
+        }
+
+        #connection-card {
+            padding: 10px 15px; 
+        }
+        
+        #connection-card .input-row.items-end {
+            max-width: 400px; 
+            margin-left: auto;
+            margin-right: auto;
+            margin-bottom: 5px;
+        }
+        
+        #room-status {
+            text-align: center;
+        }
+        
+        .main-content-grid {
+            display: grid;
+            grid-template-columns: 1fr; 
+            gap: 20px; 
+            width: 100%;
+            padding: 0 20px 20px; /* Add horizontal and bottom padding */
+            align-items: flex-start;
+        }
+        @media (min-width: 1200px) { 
+            .main-content-grid {
+                grid-template-columns: 1.5fr 1.5fr; 
+                /* max-height: calc(100vh - 40px); - REMOVED to allow page to scroll */
+            }
+        }
+        .data-entry-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px; 
+        }
+        
+        #join-room-button {
+             padding-top: 8px;
+             padding-bottom: 8px;
+        }
+        .submission-card {
+            padding-top: 15px;
+        }
+        
+        /* --- NEW DOWNTIME STYLES --- */
+        #downtime-card {
+            border: 2px solid #9CA3AF; /* Gray border for contrast */
+            background-color: #F9FAFB; /* Light background */
+        }
+        #start-downtime-button {
+            background-color: #DC2626; /* Red for stopping production */
+            color: white;
+        }
+        #start-downtime-button:hover {
+            background-color: #B91C1C;
+        }
+        #end-downtime-button {
+            background-color: #F59E0B; /* Orange for stopping the clock */
+            color: white;
+            display: none; /* Initially hidden */
+        }
+        #end-downtime-button:hover {
+            background-color: #D97706;
+        }
+        #submit-downtime-button { 
+            background-color: #3B82F6; /* Blue for submission */
+            color: white;
+            display: none; 
+        }
+        #submit-downtime-button:hover {
+            background-color: #2563EB;
+        }
+        .downtime-active-state {
+            border-color: #F87171 !important; /* Red border when active */
+            background-color: #FEF2F2 !important; /* Light red background when active */
+        }
+        /* --- END NEW DOWNTIME STYLES --- */
+        
+        #toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #3B82F6; 
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+            width: 300px;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateX(100%);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            border-left: 5px solid #60A5FA; 
+        }
+        
+        #toast-container.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(0);
+        }
+
+        /* --- SCRAP MODAL STYLES --- */
+.modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.5); z-index: 50;
+    display: none; justify-content: center; align-items: center;
+}
+.modal-overlay.active { display: flex; }
+
+.modal-content {
+    background: white; width: 90%; max-width: 650px;
+    width: 100%; height: 100%;
+    padding: 25px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    animation: fadeIn 0.3s ease-in-out;
+    overflow-y: auto;
+}
+
+@keyframes fadeIn { 
+    from { opacity: 0; transform: translateY(-10px); } 
+    to { opacity: 1; transform: translateY(0); } 
+}
+
+.scrap-btn {
+    background-color: #7C3AED; color: white; /* Violet Color */
+    border-radius: 6px; font-weight: 600; padding: 6px 12px;
+    border: none; cursor: pointer; display: flex; align-items: center; gap: 6px;
+    font-size: 0.85rem; transition: background-color 0.2s;
+}
+.scrap-btn:hover { background-color: #6D28D9; 
+}
+    </style>
+</head>
+<body>
+    <div class="header-container">
+    <div class="text-logo">
+        <span class="amphenol">Amphenol</span>
+        <span class="automotive">Automotive</span>
+    </div>
+    
+    <h1>Production Data</h1>
+    
+    <div style="width: 100%;"></div> 
+</div>
+        
+        <div class="main-content-grid">
+            
+            <div class="data-entry-container">
+                
+                <div id="connection-card" class="card bg-indigo-50 border border-indigo-200">
+                    <h2 class="text-lg font-semibold text-gray-700 mb-3">Connection Status</h2>
+                    <div class="input-row items-end">
+                        <div style="flex-grow: 2;">
+                            <label for="machine-name-input">My Machine Name:</label>
+                            <select id="machine-name-input" required class="uppercase">
+                                <option value="" disabled selected>Select Machine</option>
+                                <option value="AUM-001">AUM-001</option>
+                                <option value="AUM-002">AUM-002</option>
+                                <option value="AUM-003">AUM-003</option>
+                                <option value="AUM-005">AUM-005</option>
+                                <option value="AUM-009">AUM-009</option>
+                                <option value="AUM-010">AUM-010</option>
+                                <option value="AUM-011">AUM-011</option>
+                                <option value="AUM-012">AUM-012</option>
+                                <option value="AUM-013">AUM-013</option>
+                            </select>
+                        </div>
+                        <div style="flex-grow: 1;">
+                            <label for="machine-password-input">Password:</label>
+                            <input type="password" id="machine-password-input" placeholder="(Optional)">
+                        </div>
+                        <div style="flex-grow: 1;"> 
+                            <button onclick="joinMachineRoom()" id="join-room-button" class="w-full bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition duration-150 shadow-md">
+                                Connect
+                            </button>
+                        </div>
+                    </div>
+                    <p id="room-status" class="text-xs mt-1 font-medium text-indigo-700">Not connected to a machine room.</p>
+                    
+                    <div class="p-4 mt-3 rounded-lg bg-yellow-50 border border-yellow-300" id="reference-data-card">
+                        <p class="text-sm font-semibold text-gray-700 mb-2 text-center">Load Reference Data</p>
+                        <div class="input-row justify-center">
+                            <button id="excel-upload-button" onclick="openExcelFileSelector()" class="bg-amber-500 text-white font-semibold rounded-lg hover:bg-amber-600 transition duration-150 shadow-md p-2 flex items-center justify-center gap-2 w-full max-w-sm mx-auto">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+                                Load Reference Data
+                            </button>
+                            <input type="file" id="excel-file-input" accept=".xlsx, .xls" style="display: none;" onchange="handleExcelUpload(event)">
+                        </div>
+                    </div>
+                    </div>
+
+                <div class="card submission-card">
+                    <h2 class="text-lg font-semibold text-gray-700 mb-3">Submit Production Output</h2>
+                    <div class="input-row">
+                        <div>
+                            <label for="entry-date">Date:</label>
+                            <input type="date" id="entry-date" required>
+                        </div>
+                        <div>
+                            <label for="entry-time">Time:</label>
+                            <input type="time" id="entry-time" required>
+                        </div>
+                    </div>
+                    
+                    <div class="input-row">
+                        <div>
+                            <label for="shift">Shift:</label>
+                            <select id="shift" required>
+                                <option value="" disabled selected>Select Shift</option>
+                                <option value="A">Shift A</option>
+                                <option value="B">Shift B</option>
+                                <option value="C">Shift C</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="operator-name">Operator Name:</label>
+                            <input type="text" id="operator-name" required> 
+                        </div>
+                    </div>
+
+                    <div class="input-row">
+                        <div>
+                            <label for="fg-part-no">FG Part No:</label>
+                            <input type="text" id="fg-part-no" list="fg-part-no-list" placeholder="e.g., P-789" required oninput="autofillMeasuredData()">
+                        </div>
+                        <div>
+                            <label for="cable-id">Cable ID:</label>
+                            <input type="text" id="cable-id" list="cable-id-list" placeholder="e.g., 12" required oninput="autofillMeasuredData()">
+                        </div>
+                    </div>
+
+                    <input type="hidden" id="machine-name" value="" required> 
+                    
+                    <div class="terminal-box">
+                        <div class="title-and-id-row">
+                            <h3>Terminal 1</h3>
+                            <div class="terminal-id-input-group">
+                                <label for="t1-terminal-id">Terminal Part Number:</label>
+                                <input type="text" id="t1-terminal-id" placeholder="Enter Terminal Part Number">
+                            </div>
+                            <div class="terminal-id-input-group">
+                                <label for="t1-apl-no">APL NO:</label>
+                                <input type="text" id="t1-apl-no" placeholder="Enter APL NO:">
+                            </div>
+                        </div>
+                            
+                        <button onclick="toggleHistoryModal()" class="fixed bottom-4 right-5 bg-blue-600 text-white p-3 rounded-full shadow-2xl hover:bg-blue-700 z-50 flex items-center gap-2 font-bold transition-all active:scale-95 history-btn" onmouseenter="this.querySelector('.history-label').style.display='inline-block'" onmouseleave="this.querySelector('.history-label').style.display='none'" aria-label="Show Data History" title="Show Data History">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    <span class="history-label" style="display:none; white-space:nowrap; margin-left:6px; font-weight:800; font-size:0.95rem;">SHOW DATA HISTORY</span>
+</button>
+
+<div id="history-modal" class="modal-overlay" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; justify-content: center; align-items: center;">
+    <div class="modal-content" style="display: flex; flex-direction: column;">
+        <div class="flex justify-center items-center mb-4 border-b pb-3 relative">
+            <h2 class="text-2xl font-black text-gray-800">SUBMISSION HISTORY</h2>
+            <div class="flex items-center gap-2 absolute right-0">
+                <button id="clear-history-button" title="Clear submission history (permanently)" onclick="clearSubmissionHistory()" class="bg-red-50 text-red-600 px-3 py-1 rounded text-sm hover:bg-red-100">Clear</button>
+                <button onclick="toggleHistoryModal()" class="text-gray-500 hover:text-red-500 text-3xl">&times;</button>
+            </div>
+        </div>
+        
+        <div class="overflow-y-auto flex-grow">
+            <table class="w-full text-left text-sm border-collapse">
+                <thead class="sticky top-0 bg-gray-100 z-10">
+                    <tr class="text-gray-600 uppercase font-bold text-[10px] border-b">
+                        <th class="p-3">Type</th>
+                        <th class="p-3">Details</th>
+                        <th class="p-3">Quantity/Duration</th>
+                        <th class="p-3">Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody id="history-log-body">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+                        <div class="input-row-8col">
+                            <div>
+                                <label for="t1-crimp-height-measured">Crimp H (mm) Meas:</label>
+                                <input type="number" step="0.01" id="t1-crimp-height-measured" placeholder="" readonly tabindex="-1">
+                            </div>
+                            <div>
+                                <label for="t1-crimp-height-manual">Crimp H (mm) Man:</label>
+                                <input type="number" step="0.01" id="t1-crimp-height-manual" oninput="validateManualInput(event)">
+                            </div>
+                            
+                            <div>
+                                <label for="t1-insulation-height-measured">Insulation H (mm) Meas:</label>
+                                <input type="number" step="0.01" id="t1-insulation-height-measured" placeholder="" readonly tabindex="-1">
+                            </div>
+                            <div>
+                                <label for="t1-insulation-height-manual">Insulation H (mm) Man:</label>
+                                <input type="number" step="0.01" id="t1-insulation-height-manual" oninput="validateManualInput(event)">
+                            </div>
+                            
+                            <div>
+                                <label for="t1-crimp-width-measured">Crimp W (mm) Meas:</label>
+                                <input type="number" step="0.01" id="t1-crimp-width-measured" placeholder="" readonly tabindex="-1">
+                            </div>
+                            <div>
+                                <label for="t1-crimp-width-manual">Crimp W (mm) Man:</label>
+                                <input type="number" step="0.01" id="t1-crimp-width-manual" oninput="validateManualInput(event)">
+                            </div>
+                            
+                            <div>
+                                <label for="t1-insulation-width-measured">Insulation W (mm) Meas:</label>
+                                <input type="number" step="0.01" id="t1-insulation-width-measured" placeholder="" readonly tabindex="-1">
+                            </div>
+                            <div>
+                                <label for="t1-insulation-width-manual">Insulation W (mm) Man:</label>
+                                <input type="number" step="0.01" id="t1-insulation-width-manual" oninput="validateManualInput(event)">
+                            </div>
+                        </div>
+                            
+                        <div class="input-row-pull-force">
+                            <div>
+                                <label for="t1-pull-force-measured">Pull Force (N) Meas:</label>
+                                <input type="number" step="0.1" id="t1-pull-force-measured" placeholder="" readonly tabindex="-1">
+                            </div>
+                            <div>
+                                <label for="t1-pull-force-manual">Pull Force (N) Man:</label>
+                                <input type="number" step="0.1" id="t1-pull-force-manual" oninput="validateManualInput(event)">
+                            </div>
+                            <div></div> 
+                            <div></div> 
+                        </div>
+                    </div>
+                    <div class="terminal-box">
+                        <div class="title-and-id-row">
+                            <h3>Terminal 2</h3>
+                            <div class="terminal-id-input-group">
+                                <label for="t2-terminal-id">Terminal Part Number:</label>
+                                <input type="text" id="t2-terminal-id" placeholder="Enter Terminal Part Number">
+                            </div>
+                            <div class="terminal-id-input-group">
+                                <label for="t2-apl-no">APL NO:</label>
+                                <input type="text" id="t2-apl-no" placeholder="Enter APL NO:">
+                            </div>
+                        </div>
+                            
+                        <div class="input-row-8col">
+                            <div>
+                                <label for="t2-crimp-height-measured">Crimp H (mm) Meas:</label>
+                                <input type="number" step="0.01" id="t2-crimp-height-measured" placeholder="" readonly tabindex="-1">
+                            </div>
+                            <div>
+                                <label for="t2-crimp-height-manual">Crimp H (mm) Man:</label>
+                                <input type="number" step="0.01" id="t2-crimp-height-manual" oninput="validateManualInput(event)">
+                            </div>
+                            
+                            <div>
+                                <label for="t2-insulation-height-measured">Insulation H (mm) Meas:</label>
+                                <input type="number" step="0.01" id="t2-insulation-height-measured" placeholder="" readonly tabindex="-1">
+                            </div>
+                            <div>
+                                <label for="t2-insulation-height-manual">Insulation H (mm) Man:</label>
+                                <input type="number" step="0.01" id="t2-insulation-height-manual" oninput="validateManualInput(event)">
+                            </div>
+                            
+                            <div>
+                                <label for="t2-crimp-width-measured">Crimp W (mm) Meas:</label>
+                                <input type="number" step="0.01" id="t2-crimp-width-measured" placeholder="" readonly tabindex="-1">
+                            </div>
+                            <div>
+                                <label for="t2-crimp-width-manual">Crimp W (mm) Man:</label>
+                                <input type="number" step="0.01" id="t2-crimp-width-manual" oninput="validateManualInput(event)">
+                            </div>
+                            
+                            <div>
+                                <label for="t2-insulation-width-measured">Insulation W (mm) Meas:</label>
+                                <input type="number" step="0.01" id="t2-insulation-width-measured" placeholder="" readonly tabindex="-1">
+                            </div>
+                            <div>
+                                <label for="t2-insulation-width-manual">Insulation W (mm) Man:</label>
+                                <input type="number" step="0.01" id="t2-insulation-width-manual" oninput="validateManualInput(event)">
+                            </div>
+                        </div>
+                            
+                        <div class="input-row-pull-force">
+                            <div>
+                                <label for="t2-pull-force-measured">Pull Force (N) Meas:</label>
+                                <input type="number" step="0.1" id="t2-pull-force-measured" placeholder="" readonly tabindex="-1">
+                            </div>
+                            <div>
+                                <label for="t2-pull-force-manual">Pull Force (N) Man:</label>
+                                <input type="number" step="0.1" id="t2-pull-force-manual" oninput="validateManualInput(event)">
+                            </div>
+                            <div></div> 
+                            <div></div> 
+                        </div>
+                    </div>
+                    <div class="input-row input-row-qty">
+                        <div>
+                            <label for="produced-qty">Produced Qty:</label>
+                            <input type="number" id="produced-qty" required min="1">
+                        </div>
+                        <div>
+                            <label for="produced-length">Length (M/F):</label>
+                            <input type="number" step="any" id="produced-length" required min="0.1" oninput="autofillMeasuredData()">
+                        </div>
+                        <div>
+                            <label for="qty-produced-hours">Hours:</label>
+                            <input type="number" step="0.1" id="qty-produced-hours" required min="0.1">
+                        </div>
+                    </div>
+
+                    <div class="btn-group">
+                        <button id="submit-button" onclick="submitOutput()">Submit Data</button>
+                        <button id="reset-button" onclick="resetForm()">Reset Fields</button>
+                    </div>
+
+                    <div id="message" class="message"></div>
+                    
+                    <datalist id="fg-part-no-list"></datalist>
+                    <datalist id="cable-id-list"></datalist>
+                </div>
+                
+                <div id="downtime-card" class="card">
+                    <h2 class="text-lg font-semibold text-gray-700 mb-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline align-text-bottom mr-1"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        Log Downtime / Interruption
+         
+                     <button onclick="openScrapModal()" class="scrap-btn">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                      Book Scrap
+                     </button>
+
+                    </h2>
+                    
+                    <div class="input-row">
+                        <div>
+                            <label for="downtime-start-time">Start Time:</label>
+                            <input type="datetime-local" id="downtime-start-time" disabled required>
+                        </div>
+                        <div>
+                            <label for="downtime-end-time">End Time:</label>
+                            <input type="datetime-local" id="downtime-end-time" disabled onchange="calculateDowntime()">
+                        </div>
+                    </div>
+                    
+                    <div class="input-row">
+                        <div>
+                            <label for="downtime-total-time">Total Time (Hours):</label>
+                            <input type="number" id="downtime-total-time" readonly value="0.00" step="0.01">
+                        </div>
+                        <div>
+                            <label for="downtime-reason">Reason for Downtime:</label>
+                            <input type="text" id="downtime-reason" placeholder="e.g., Tool Change, Breakdown" disabled required>
+                        </div>
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button id="start-downtime-button" onclick="startDowntime()">Start Downtime</button>
+                        <button id="end-downtime-button" onclick="endDowntime()" style="display: none;">End Downtime</button> 
+                        <button id="submit-downtime-button" onclick="submitDowntime()" style="display: none;">Submit Downtime</button> 
+                    </div>
+                    <p id="downtime-status-message" class="text-sm mt-2 text-center text-gray-500 font-medium"></p>
+                </div>
+                </div> 
+            
+            <div id="plan-sheet-container" class="card">
+                <div class="plan-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                    <span class="text-lg">Active Plan Sheet:</span>
+                    <span id="current-plan-machine" class="text-base font-normal">N/A</span>
+                    <div style="margin-left:auto; display:flex; align-items:center; gap:8px;">
+                        <div id="next-plan-badge" style="background:#EEF2FF;color:#3730A3;padding:6px 10px;border-radius:9999px;font-weight:800;font-size:0.85rem;display:inline-flex;align-items:center;gap:6px;">Queued: <span id="next-plan-count">0</span></div>
+                        <button id="view-next-plan-button" onclick="viewNextPlan()" class="bg-indigo-600 text-white px-3 py-1 rounded text-sm opacity-50 cursor-not-allowed" disabled>View Next Plan</button>
+                        <button id="view-queued-button" onclick="openQueuedModal()" class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded text-sm">Queued</button>
+                        <button id="view-history-button" onclick="openPlanHistoryModal()" class="bg-gray-200 text-gray-800 px-3 py-1 rounded text-sm">History</button>
+                    </div>
+                </div>
+                <div id="plan-data-view">
+                    <p class="text-gray-500 italic text-sm">Plan data will appear here after the dashboard assigns a sheet.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container" class="toast-box">
+        <div class="flex justify-between items-center mb-1">
+            <h2 class="text-sm font-semibold text-white flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                Live Message
+            </h2>
+            <button onclick="hideMessageBox()" class="text-white hover:text-gray-200 focus:outline-none -mt-1 -mr-1 p-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <p id="live-message-content" class="text-sm text-white font-medium"></p>
+    </div>
+<div id="scrap-modal" class="modal-overlay" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; justify-content: center; align-items: center;">
+    <div class="modal-content" style="box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">
+        
+        <div class="flex justify-center items-center mb-5 border-b pb-3 relative">
+            <h2 class="text-2xl font-black text-gray-800 tracking-tight">BOOK SCRAP</h2>
+            <div class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold absolute right-0">
+                SN: <span id="scrap-serial-display">001</span>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 mb-4">
+            <div class="bg-gray-50 p-2 rounded border">
+                <label class="text-[10px] uppercase font-black text-gray-400">FG Part Number</label>
+                <input type="text" id="scrap-fg-part" readonly class="w-full bg-transparent font-bold text-gray-700 outline-none text-sm">
+            </div>
+            <div class="bg-gray-50 p-2 rounded border">
+                <label class="text-[10px] uppercase font-black text-gray-400">Cable ID / Color</label>
+                <input type="text" id="scrap-cable-id" readonly class="w-full bg-transparent font-bold text-gray-700 outline-none text-sm">
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 mb-4">
+            <div class="bg-gray-50 p-2 rounded border">
+                <label class="text-[10px] uppercase font-black text-gray-400">Current Length (mm)</label>
+                <input type="text" id="scrap-unit-length" readonly class="w-full bg-transparent font-bold text-blue-600 outline-none text-sm">
+            </div>
+            <div class="flex items-end">
+                <label class="flex items-center gap-2 cursor-pointer bg-amber-50 p-2 rounded border border-amber-200 w-full h-full">
+                    <input type="checkbox" id="scrap-use-sample" onchange="calculateScrapTotals()" class="w-5 h-5 accent-amber-600">
+                    <span class="text-xs font-black text-amber-800 uppercase">100mm Sample</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="space-y-4 bg-gray-50 p-4 rounded-xl border border-gray-200 mb-4">
+            <div class="grid grid-cols-3 gap-3">
+                <div class="flex flex-col">
+                    <span class="text-[10px] font-black text-gray-400 uppercase mb-1">Cable Qty</span>
+                    <input type="number" id="scrap-qty" placeholder="0" oninput="calculateScrapTotals()" class="border-2 border-indigo-200 p-2 rounded-lg text-center text-xl font-black text-indigo-700 focus:border-indigo-500 outline-none h-14">
+                </div>
+                <div class="flex flex-col">
+                    <span id="label-scrap-t1-id" class="text-[9px] font-bold text-blue-600 uppercase mb-1 truncate">Term 1</span>
+                    <input type="number" id="scrap-t1-qty" placeholder="0" class="border-2 border-gray-200 p-2 rounded-lg text-center text-xl font-black text-gray-700 h-14 focus:border-blue-400 outline-none">
+                </div>
+                <div class="flex flex-col">
+                    <span id="label-scrap-t2-id" class="text-[9px] font-bold text-blue-600 uppercase mb-1 truncate">Term 2</span>
+                    <input type="number" id="scrap-t2-qty" placeholder="0" class="border-2 border-gray-200 p-2 rounded-lg text-center text-xl font-black text-gray-700 h-14 focus:border-blue-400 outline-none">
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 mb-5">
+            <div>
+                <label class="text-xs font-bold text-gray-500 mb-1 block">REASON</label>
+                <select id="scrap-reason" onchange="toggleScrapReason()" class="w-full border-2 border-gray-100 p-2 rounded-lg text-sm font-semibold">
+                    <option value="" disabled selected>Select reason</option>
+                    <option value="END_BT_SCRAP">A. END BT SCRAP</option>
+                    <option value="SETTING_QUALITY_TESTING_SCRAP">B. SETTING &amp; QUALITY TESTING SCRAP</option>
+                    <option value="REJECTION">C. REJECTION</option>
+                    <option value="REWORK">D. RE-WORK</option>
+                    <option value="SUPPLIER_REJECTION">E. SUPPLIER REJECTION</option>
+                    <option value="OTHER">F. OTHER</option>
+                </select>
+                <input type="text" id="scrap-reason-other" placeholder="Please specify reason" class="w-full border-2 border-gray-100 p-2 rounded-lg text-sm font-semibold mt-2" style="display:none;">
+            </div>
+            <div>
+                <label class="text-xs font-bold text-gray-500 mb-1 block">BATCH / PICKLIST</label>
+                <input type="text" id="scrap-picklist" placeholder="Optional" class="w-full border-2 border-gray-100 p-2 rounded-lg text-sm font-semibold">
+            </div>
+        </div>
+
+        <div class="bg-red-50 border-2 border-red-100 p-3 rounded-xl text-center mb-6">
+            <span class="text-red-400 text-[10px] font-black uppercase tracking-widest">Calculated Scrap Length</span>
+            <div id="scrap-total-length-display" class="text-red-600 text-3xl font-black">0.000 <span class="text-lg">Meters</span></div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <button onclick="submitScrap()" class="bg-green-600 text-white font-black py-4 rounded-xl shadow-lg hover:bg-green-700 active:transform active:scale-95 transition-all uppercase tracking-widest">
+                SUBMIT DATA
+            </button>
+            <button type="button" onclick="closeScrapModal()" class="bg-gray-200 text-gray-600 font-bold py-4 rounded-xl uppercase">
+              CANCEL
+           </button>
+        </div>
+    </div>
+</div>
+
+<!-- Plan History Modal -->
+<div id="plan-history-modal" class="modal-overlay" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; justify-content: center; align-items: center;">
+    <div class="modal-content">
+        <div class="flex justify-center items-center mb-4 relative">
+            <h2 class="text-xl font-bold">Plan History</h2>
+            <button onclick="closePlanHistoryModal()" class="bg-gray-100 px-3 py-1 rounded absolute right-0">Close</button>
+        </div>
+        <div class="grid grid-cols-3 gap-4">
+            <div style="border-right:1px solid #eee; padding-right:10px;">
+                <h3 class="font-semibold mb-2">Archived Plans</h3>
+                <div id="plan-history-list" style="max-height:420px; overflow:auto;"></div>
+            </div>
+            <div class="col-span-2">
+                <h3 id="archived-detail-title" class="font-semibold mb-2">Select an archived plan to preview</h3>
+                <div id="archived-detail-view" style="max-height:480px; overflow:auto; border:1px solid #f0f0f0; padding:8px; border-radius:6px; background:#fafafa"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Queued Plans Preview Modal -->
+<div id="queued-modal" class="modal-overlay" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10000; justify-content: center; align-items: center;">
+    <div class="modal-content">
+        <div class="flex justify-center items-center mb-4 relative">
+            <h2 class="text-xl font-bold">Queued Plans</h2>
+            <button onclick="closeQueuedModal()" class="bg-gray-100 px-3 py-1 rounded absolute right-0">Close</button>
+        </div>
+        <div class="grid grid-cols-3 gap-4">
+            <div style="border-right:1px solid #eee; padding-right:10px;">
+                <h3 class="font-semibold mb-2">Queued</h3>
+                <div id="queued-list" style="max-height:420px; overflow:auto;"></div>
+            </div>
+            <div class="col-span-2">
+                <h3 id="queued-detail-title" class="font-semibold mb-2">Select a queued plan to preview</h3>
+                <div id="queued-preview-pane" style="max-height:480px; overflow:auto; border:1px solid #f0f0f0; padding:8px; border-radius:6px; background:#fff"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Large In-Page Preview Modal -->
+<div id="large-preview-modal" class="modal-overlay" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10050; justify-content: center; align-items: center;">
+    <div class="modal-content" style="overflow: auto;">
+        <div class="flex justify-center items-center mb-4 relative">
+            <h2 id="large-preview-title" class="text-xl font-bold">Plan Preview</h2>
+            <div class="absolute right-0">
+                <button onclick="printLargePreview()" class="bg-gray-100 px-3 py-1 rounded mr-2">Print</button>
+                <button onclick="closeLargePreview()" class="bg-gray-100 px-3 py-1 rounded">Close</button>
+            </div>
+        </div>
+        <div id="large-preview-content" style="background:#fff; padding:8px; border-radius:6px;"></div>
+    </div>
+</div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const machineNameInput = document.getElementById('machine-name-input');
+        const machineNameHidden = document.getElementById('machine-name');
+        const roomStatus = document.getElementById('room-status');
+        const planDataView = document.getElementById('plan-data-view');
+        const currentPlanMachine = document.getElementById('current-plan-machine');
+        let currentPlan = [];
+        // Server-driven queued plan count (server maintains the queue)
+        let serverQueuedCount = 0;
+        // Archived plans history for this machine
+        let planHistory = [];
+        let viewingArchived = false;
+        let archivedViewIndex = null;
+        // Queued plans preview state (fetched from server without dequeuing)
+        let queuedPlans = [];
+        const connectionCard = document.getElementById('connection-card');
+        const messageBox = document.getElementById('toast-container');
+        const messageContent = document.getElementById('live-message-content');
+        const submissionCard = document.querySelector('.submission-card'); 
+        const downtimeCard = document.getElementById('downtime-card'); 
+        
+        // GLOBAL LOOKUP TABLE for Excel Data
+        let measuredDataLookup = [];
+        // ... (Existing code ends around line 543 before setInitialDateTime())
+    
+    /** Helper function to get the current date and time formatted for a datetime-local input (YYYY-MM-DDTHH:MM). */
+    function getCurrentDateTimeLocal() {
+        const now = new Date();
+        // Helper for padding numbers
+        const pad = (num) => String(num).padStart(2, '0');
+
+        const year = now.getFullYear();
+        const month = pad(now.getMonth() + 1); // getMonth() is 0-indexed
+        const day = pad(now.getDate());
+        const hours = pad(now.getHours());
+        const minutes = pad(now.getMinutes());
+        
+        // datetime-local format is "YYYY-MM-DDThh:mm"
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
+
+    // ... (Existing functions like setInitialDateTime(), joinMachineRoom(), etc., continue below)
+        // --- NEW: Downtime State Management ---
+        let isDowntimeActive = false;
+        let downtimeStartTime = null;
+        let pendingDowntimeData = null; // NEW: Holds data ready for manual submission
+        const downtimeStartInput = document.getElementById('downtime-start-time');
+        const downtimeEndInput = document.getElementById('downtime-end-time');
+        const downtimeTotalTimeInput = document.getElementById('downtime-total-time');
+        const downtimeReasonInput = document.getElementById('downtime-reason');
+        const startDowntimeButton = document.getElementById('start-downtime-button');
+        const endDowntimeButton = document.getElementById('end-downtime-button');
+        const submitDowntimeButton = document.getElementById('submit-downtime-button'); // NEW
+        const downtimeStatusMessage = document.getElementById('downtime-status-message');
+        // --- END Downtime State Management ---
+
+        // --- NEW: EXCEL KEY MAPPING AND NORMALIZATION LOGIC (FIXED) ---
+        const EXCEL_HEADER_MAP = {
+            "fgpartno": "FG_PART_NO",
+            "cableid": "CABLE_ID",
+            "length": "LENGTH_SPEC", 
+            "lengthspec": "LENGTH_SPEC", 
+            
+            "t1terminalid": "T1_TERMINAL_ID",
+            "t1terminalpartnumber": "T1_TERMINAL_ID",
+            "t1aplno": "T1_APL_NO",
+            "t2terminalid": "T2_TERMINAL_ID",
+            "t2terminalpartnumber": "T2_TERMINAL_ID",
+            "t2aplno": "T2_APL_NO",
+
+            "t1crimph": "T1_CRIMP_H",
+            "t1crimphmm": "T1_CRIMP_H", 
+            "t1insulationh": "T1_INSULATION_H",
+            "t1insulationhmm": "T1_INSULATION_H", 
+            "t1crimpw": "T1_CRIMP_W",
+            "t1crimpwmm": "T1_CRIMP_W",
+            "t1insulationw": "T1_INSULATION_W",
+            "t1insulationwmm": "T1_INSULATION_W",
+            "t1pullforce": "T1_PULL_FORCE",
+            "t1pullforcen": "T1_PULL_FORCE", 
+
+            "t2crimph": "T2_CRIMP_H",
+            "t2crimphmm": "T2_CRIMP_H", 
+            "t2insulationh": "T2_INSULATION_H",
+            "t2insulationhmm": "T2_INSULATION_H",
+            "t2crimpw": "T2_CRIMP_W",
+            "t2crimpwmm": "T2_CRIMP_W",
+            "t2insulationw": "T2_INSULATION_W",
+            "t2insulationwmm": "T2_INSULATION_W",
+            "t2pullforce": "T2_PULL_FORCE",
+            "t2pullforcen": "T2_PULL_FORCE",
+        };
+
+        /** Normalizes an Excel header string by removing non-alphanumeric chars (excluding spaces, but spaces are removed later) and converting to lowercase. */
+        function normalizeHeader(header) {
+            // Removes spaces, parentheses, and all non-alphanumeric characters, then lowercases.
+            return String(header).replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+        }
+
+        /** Remaps keys in an Excel row object from potentially inconsistent header names to standard internal names. */
+        function normalizeExcelRow(rawRow) {
+            const standardizedRow = {};
+            for (const key in rawRow) {
+                if (Object.hasOwnProperty.call(rawRow, key)) {
+                    const normalizedKey = normalizeHeader(key);
+                    const standardKey = EXCEL_HEADER_MAP[normalizedKey];
+                    
+                    // Map to the standard key if found
+                    if (standardKey) {
+                        standardizedRow[standardKey] = rawRow[key];
+                    }
+                }
+            }
+            return standardizedRow;
+        }
+        // --- END NEW LOGIC ---
+
+        function setInitialDateTime() {
+            const now = new Date();
+            // Function to format Date to 'YYYY-MM-DD' and Time to 'HH:MM'
+            const formatDate = (date) => date.toISOString().split('T')[0];
+            const formatTime = (date) => date.toTimeString().slice(0, 5);
+
+            document.getElementById('entry-date').value = formatDate(now);
+            document.getElementById('entry-time').value = formatTime(now);
+        }
+        
+        document.addEventListener('DOMContentLoaded', setInitialDateTime);
+
+        function joinMachineRoom() {
+            const machineName = machineNameInput.value.toUpperCase();
+            const password = document.getElementById('machine-password-input').value;
+
+            if (!machineName) {
+                alert("Please select a Machine Name.");
+                return;
+            }
+            machineNameHidden.value = machineName;
+            
+            machineNameInput.disabled = true;
+            document.getElementById('machine-password-input').disabled = true;
+            document.getElementById('join-room-button').disabled = true;
+            roomStatus.textContent = `Connecting to room: ${machineName}...`;
+            
+            socket.emit('join_machine_room', { machineName: machineName, password: password });
+        }
+        
+        // **MODIFIED: This function now performs a partial clear (used after submission)**
+        function clearProductionFields() {
+            // Shift and Operator Name are intentionally NOT cleared here (as requested by user)
+            document.getElementById('fg-part-no').value = ''; 
+            document.getElementById('cable-id').value = ''; 
+            document.getElementById('produced-qty').value = '';
+            document.getElementById('produced-length').value = '';
+            document.getElementById('qty-produced-hours').value = '';
+            
+            // Terminal Manual/Measured fields to clear
+            const terminalFields = [
+                // T1
+                't1-terminal-id', 't1-apl-no',
+                't1-crimp-height-measured', 't1-crimp-height-manual',
+                't1-insulation-height-measured', 't1-insulation-height-manual',
+                't1-crimp-width-measured', 't1-crimp-width-manual',
+                't1-insulation-width-measured', 't1-insulation-width-manual',
+                't1-pull-force-measured', 't1-pull-force-manual',
+                // T2
+                't2-terminal-id', 't2-apl-no',
+                't2-crimp-height-measured', 't2-crimp-height-manual',
+                't2-insulation-height-measured', 't2-insulation-height-manual',
+                't2-crimp-width-measured', 't2-crimp-width-manual',
+                't2-insulation-width-measured', 't2-insulation-width-manual',
+                't2-pull-force-measured', 't2-pull-force-manual'
+            ];
+
+            terminalFields.forEach(id => {
+                const input = document.getElementById(id);
+                if (input) {
+                    input.value = '';
+                    // UPDATED: Clear new 3-color validation styles
+                    input.classList.remove('exact-match-input', 'tolerable-match-input', 'invalid-manual-input');
+                    input.removeAttribute('data-tolerance');
+                    input.removeAttribute('data-invalid'); // Clear new invalid attribute
+                }
+            });
+
+            document.getElementById('message').textContent = '';
+            setInitialDateTime(); // Reset date/time to current
+        }
+
+        // **MODIFIED: The Reset Button function (calls partial clear + clears persistent fields)**
+        function resetForm() {
+            if (isDowntimeActive) {
+                showMessageBox('Cannot reset form while Downtime is active. Please end downtime first.', 'warning');
+                return;
+            }
+            clearProductionFields(); // Clear all production-specific fields
+            // Reset the persistent fields for a full reset
+            document.getElementById('shift').value = '';
+            document.getElementById('operator-name').value = '';
+        }
+
+        function markPlanLineComplete(lineId) {
+            socket.emit('mark_plan_complete', { lineId: lineId, machineName: machineNameHidden.value });
+        }
+        
+        // --- UPDATED Autofill Function ---
+        function clearMeasuredFields() {
+            const measuredFields = [
+                // T1
+                't1-terminal-id', 't1-apl-no',
+                't1-crimp-height-measured', 't1-insulation-height-measured', 't1-crimp-width-measured', 
+                't1-insulation-width-measured', 't1-pull-force-measured', 
+                // T2
+                't2-terminal-id', 't2-apl-no',
+                't2-crimp-height-measured', 't2-insulation-height-measured', 't2-crimp-width-measured', 
+                't2-insulation-width-measured', 't2-pull-force-measured'
+            ];
+            
+            const manualFields = [
+                't1-crimp-height-manual', 't1-insulation-height-manual', 't1-crimp-width-manual', 
+                't1-insulation-width-manual', 't1-pull-force-manual', 
+                't2-crimp-height-manual', 't2-insulation-height-manual', 't2-crimp-width-manual', 
+                't2-insulation-width-manual', 't2-pull-force-manual'
+            ];
+
+            measuredFields.forEach(id => {
+                const input = document.getElementById(id);
+                input.value = '';
+                input.removeAttribute('data-tolerance');
+            });
+            manualFields.forEach(id => {
+                 const input = document.getElementById(id);
+                 // UPDATED: Clear new 3-color validation styles
+                 input.classList.remove('exact-match-input', 'tolerable-match-input', 'invalid-manual-input');
+                 input.removeAttribute('data-invalid'); // Clear new invalid attribute
+            });
+        }
+        
+        function autofillMeasuredData() {
+            const fgPartNoInput = document.getElementById('fg-part-no').value.trim();
+            const cableIdInput = document.getElementById('cable-id').value.trim();
+            const producedLengthInput = parseFloat(document.getElementById('produced-length').value.trim()); 
+            
+            clearMeasuredFields(); 
+            
+            if (!fgPartNoInput || !cableIdInput || isNaN(producedLengthInput) || producedLengthInput <= 0 || measuredDataLookup.length === 0) {
+                return;
+            }
+            
+            const match = measuredDataLookup.find(row => 
+                row.FG_PART_NO === fgPartNoInput && 
+                row.CABLE_ID === cableIdInput &&
+                row.BASE_LENGTH !== undefined && 
+                producedLengthInput >= (row.BASE_LENGTH - row.TOLERANCE) &&
+                producedLengthInput <= (row.BASE_LENGTH + row.TOLERANCE)
+            );
+
+            // Helper to set measured value and tolerance attribute
+            const setMeasuredData = (idPrefix, specKey) => {
+                const baseKey = `${specKey}_BASE`;
+                const toleranceKey = `${specKey}_TOLERANCE`;
+                
+                const measuredInputId = `${idPrefix}-measured`;
+                const measuredInput = document.getElementById(measuredInputId);
+                
+                const baseValue = match[baseKey];
+                const toleranceValue = match[toleranceKey];
+                
+                if (baseValue !== '' && baseValue !== undefined && !isNaN(baseValue)) {
+                    measuredInput.value = baseValue;
+                    measuredInput.setAttribute('data-tolerance', toleranceValue);
+                } else {
+                    measuredInput.value = '';
+                    measuredInput.removeAttribute('data-tolerance');
+                }
+                
+                // Manually trigger the validation check if a manual value exists
+                const manualInputId = `${idPrefix}-manual`;
+                const manualInput = document.getElementById(manualInputId);
+                if (manualInput && manualInput.value.trim() !== '') {
+                    validateManualInput({ target: manualInput });
+                } else if (manualInput) {
+                    // Clear styles if no manual value is present
+                    manualInput.classList.remove('exact-match-input', 'tolerable-match-input', 'invalid-manual-input');
+                    manualInput.removeAttribute('data-invalid'); // Clear new invalid attribute
+                }
+            };
+            
+            if (match) {
+                // Terminal 1 Data - Non-Spec Fields
+                document.getElementById('t1-terminal-id').value = match.T1_TERMINAL_ID || ''; 
+                document.getElementById('t1-apl-no').value = match.T1_APL_NO || ''; 
+                // Terminal 1 Data - Spec Fields
+                setMeasuredData('t1-crimp-height', 'T1_CRIMP_H');
+                setMeasuredData('t1-insulation-height', 'T1_INSULATION_H');
+                setMeasuredData('t1-crimp-width', 'T1_CRIMP_W');
+                setMeasuredData('t1-insulation-width', 'T1_INSULATION_W');
+                setMeasuredData('t1-pull-force', 'T1_PULL_FORCE');
+                
+                // Terminal 2 Data - Non-Spec Fields
+                document.getElementById('t2-terminal-id').value = match.T2_TERMINAL_ID || ''; 
+                document.getElementById('t2-apl-no').value = match.T2_APL_NO || ''; 
+                // Terminal 2 Data - Spec Fields
+                setMeasuredData('t2-crimp-height', 'T2_CRIMP_H');
+                setMeasuredData('t2-insulation-height', 'T2_INSULATION_H');
+                setMeasuredData('t2-crimp-width', 'T2_CRIMP_W');
+                setMeasuredData('t2-insulation-width', 'T2_INSULATION_W');
+                setMeasuredData('t2-pull-force', 'T2_PULL_FORCE');
+
+                showMessageBox(`Full reference data for ${fgPartNoInput} / ${cableIdInput} / ${producedLengthInput} (within tolerance) autofilled from check sheet.`, 'success');
+            } else {
+                
+                let debugMessage = `No matching reference data found for ${fgPartNoInput} / ${cableIdInput} / ${producedLengthInput}. `;
+                
+                const fgMatches = measuredDataLookup.filter(row => row.FG_PART_NO === fgPartNoInput);
+                
+                if (fgMatches.length > 0) {
+                    debugMessage += `Found ${fgMatches.length} rows with matching FG Part No. `;
+                    
+                    const cableMatches = fgMatches.filter(row => row.CABLE_ID === cableIdInput);
+                    
+                    if (cableMatches.length > 0) {
+                        debugMessage += `Found ${cableMatches.length} rows also matching Cable ID. Length must be out of tolerance.`;
+                        if (cableMatches[0].BASE_LENGTH !== undefined) {
+                            debugMessage += ` (Check that ${producedLengthInput} is between ${cableMatches[0].BASE_LENGTH - cableMatches[0].TOLERANCE} and ${cableMatches[0].BASE_LENGTH + cableMatches[0].TOLERANCE})`;
+                        }
+                    } else {
+                         debugMessage += `Cable ID "${cableIdInput}" was not found in combination with the FG Part No.`;
+                    }
+                    
+                } else {
+                    debugMessage += `FG Part No "${fgPartNoInput}" was not found in the loaded sheet.`;
+                }
+
+                showMessageBox(debugMessage, 'warning');
+            }
+        }
+        
+        // --- NEW/UPDATED: Function to extract base numeric value and tolerance from specification string ---
+        /** * Attempts to extract a base numeric value and tolerance from a string that might contain specifications, 
+         * tolerances, and units (e.g., "2.10±0.1 (SC)", "120 N").
+         * Applies default tolerance if none is explicitly found.
+         */
+        function parseSpecification(value, fieldType) {
+            const DEFAULT_TOLERANCE_DIMENSIONAL = 0.1;
+            const DEFAULT_TOLERANCE_PULL_FORCE = 10.0;
+            
+            let base = '';
+            let tolerance = '';
+            
+            // If the value is already a number (raw data from Excel), use it as base and apply default tolerance
+            if (typeof value === 'number') {
+                base = value; 
+                tolerance = (fieldType === 'PULL_FORCE') ? DEFAULT_TOLERANCE_PULL_FORCE : DEFAULT_TOLERANCE_DIMENSIONAL;
+                return { base, tolerance };
+            }
+            if (typeof value !== 'string') {
+                return { base: '', tolerance: '' };
+            }
+            
+            let str = value.trim().toUpperCase();
+
+            // 1. Handle Pull Force (N) - Remove 'N' if present
+            if (str.endsWith('N')) {
+                str = str.replace('N', '').trim();
+            }
+            
+            // 2. Look for explicit base ± tolerance pattern: e.g., "2.10±0.1", "0.95 +/ 0.05", "1.25(±0.1)"
+            const explicitMatch = str.match(/^(\d+(?:\.\d+)?)(?:[\s(]*[+-±]\s*(\d+(?:\.\d+)?))?/);
+            if (explicitMatch) {
+                base = parseFloat(explicitMatch[1]);
+                
+                // If tolerance is found in the match group 2
+                if (explicitMatch[2]) {
+                    tolerance = parseFloat(explicitMatch[2]);
+                }
+            } 
+            
+            // 3. Apply default tolerance if base is found but tolerance isn't explicit
+            if (base !== '' && !isNaN(base)) {
+                if (tolerance === '') {
+                    tolerance = (fieldType === 'PULL_FORCE') 
+                        ? DEFAULT_TOLERANCE_PULL_FORCE 
+                        : DEFAULT_TOLERANCE_DIMENSIONAL;
+                }
+            } else {
+                // If no number could be parsed at all
+                base = '';
+                tolerance = '';
+            }
+            
+            return { base, tolerance };
+        }
+        // --- END NEW FUNCTION ---
+
+        /** UPDATED FUNCTION: Performs live validation on a manual input field against its corresponding measured value and tolerance, applying the 3-color scheme. */
+        function validateManualInput(event) {
+            const manualInput = event.target;
+            const manualId = manualInput.id;
+            
+            // Derive the ID for the corresponding measured field. 
+            const measuredId = manualId.replace('-manual', '-measured');
+            const measuredInput = document.getElementById(measuredId);
+            
+            // Clear previous validation styles and invalid data attribute
+            manualInput.classList.remove('exact-match-input', 'tolerable-match-input', 'invalid-manual-input');
+            manualInput.removeAttribute('data-invalid');
+            
+            if (!measuredInput) {
+                return; // No corresponding measured field
+            }
+
+            const manualValue = parseFloat(manualInput.value);
+            const measuredValue = parseFloat(measuredInput.value);
+            
+            // Only validate if required numeric data is present and the user has entered a value
+            if (manualInput.value.trim() === '' || isNaN(manualValue) || isNaN(measuredValue)) {
+                return; 
+            }
+
+            let validationType = 'invalid'; // Default to red/invalid
+            const epsilon = 0.0001; // Use a small epsilon for floating point comparison
+
+            if (manualId.includes('pull-force')) {
+                // Pull Force Logic (Minimum strength required)
+                if (manualValue < measuredValue) {
+                    validationType = 'invalid'; // Red: Less than minimum required
+                } else {
+                    validationType = 'exact'; // Green: Greater than or equal to minimum required
+                }
+            } else {
+                // Dimensional Measurements Logic (Tolerance +/-)
+                // This covers: Crimp H/W, Insulation H/W for both T1 & T2
+                const tolerance = parseFloat(measuredInput.getAttribute('data-tolerance'));
+                
+                if (isNaN(tolerance)) {
+                    return;
+                }
+                
+                const difference = Math.abs(manualValue - measuredValue);
+                
+                if (difference > tolerance) {
+                    validationType = 'invalid'; // Red: Outside tolerance
+                } else if (Math.abs(difference) < epsilon) { // If manualValue is effectively equal to measuredValue
+                    validationType = 'exact'; // Green: Exact match
+                } else { 
+                    validationType = 'tolerable'; // Orange: Within tolerance but not exact
+                }
+            }
+            
+            // Apply the final style based on validationType
+            if (validationType === 'exact') {
+                manualInput.classList.add('exact-match-input');
+            } else if (validationType === 'tolerable') {
+                manualInput.classList.add('tolerable-match-input');
+            } else { // 'invalid'
+                manualInput.classList.add('invalid-manual-input');
+                manualInput.setAttribute('data-invalid', 'true'); // Block submission
+            }
+        }
+        
+        /** NEW FUNCTION: Populates the datalists for FG Part No and Cable ID from the loaded lookup data. */
+        function populateDatalists(lookupData) {
+            const fgList = document.getElementById('fg-part-no-list');
+            const cableList = document.getElementById('cable-id-list');
+            
+            // Clear existing options
+            fgList.innerHTML = '';
+            cableList.innerHTML = '';
+
+            if (lookupData.length === 0) {
+                return;
+            }
+
+            // Get unique FG Part Nos
+            const uniqueFgPartNos = [...new Set(lookupData
+                .map(row => row.FG_PART_NO)
+                .filter(value => value))]; // Filter out empty/null/undefined
+            
+            uniqueFgPartNos.forEach(fg => {
+                const option = document.createElement('option');
+                option.value = fg;
+                fgList.appendChild(option);
+            });
+
+            // Get unique Cable IDs
+            const uniqueCableIds = [...new Set(lookupData
+                .map(row => row.CABLE_ID)
+                .filter(value => value))]; // Filter out empty/null/undefined
+            
+            uniqueCableIds.forEach(cable => {
+                const option = document.createElement('option');
+                option.value = cable;
+                cableList.appendChild(option);
+            });
+        }
+        
+        // --- FIXED: Excel Upload Functions (Using the new parser) ---
+        function openExcelFileSelector() {
+            document.getElementById('excel-file-input').click();
+        }
+
+        function handleExcelUpload(event) {
+            const file = event.target.files[0];
+            if (!file) {
+                return;
+            }
+
+            const refDataCard = document.getElementById('reference-data-card');
+            refDataCard.className = refDataCard.className.replace(/bg-\w+-\d+ border-?\w*-\d+/g, '').trim(); 
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array', cellStyles: true, raw: true }); 
+                    const sheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[sheetName];
+
+                    const rawJsonData = XLSX.utils.sheet_to_json(worksheet);
+
+                    if (rawJsonData.length === 0) {
+                        throw new Error('No data rows found. Ensure data starts on row 2 with headers on row 1.');
+                    }
+                    
+                    // --- MODIFIED: Key Normalization and Parsing (Including Base/Tolerance) ---
+                    measuredDataLookup = rawJsonData.map(rawRow => {
+                        const standardizedRow = normalizeExcelRow(rawRow); 
+                        const newRow = {};
+                        
+                        // 1. Copy non-spec fields
+                        newRow.FG_PART_NO = String(standardizedRow.FG_PART_NO || '').trim();
+                        newRow.CABLE_ID = String(standardizedRow.CABLE_ID || '').trim();
+                        newRow.T1_TERMINAL_ID = standardizedRow.T1_TERMINAL_ID || '';
+                        newRow.T1_APL_NO = standardizedRow.T1_APL_NO || '';
+                        newRow.T2_TERMINAL_ID = standardizedRow.T2_TERMINAL_ID || '';
+                        newRow.T2_APL_NO = standardizedRow.T2_APL_NO || '';
+                        
+                        // Helper to parse and assign base/tolerance for a spec field
+                        const parseAndAssign = (standardKey, type) => {
+                            const spec = standardizedRow[standardKey];
+                            const { base, tolerance } = parseSpecification(spec, type);
+                            newRow[`${standardKey}_BASE`] = base;
+                            newRow[`${standardKey}_TOLERANCE`] = tolerance;
+                        };
+                        
+                        // 2. Parse and Extract base numeric values for Crimp/Pull Force fields (Dimensional)
+                        parseAndAssign('T1_CRIMP_H', 'DIMENSIONAL');
+                        parseAndAssign('T1_INSULATION_H', 'DIMENSIONAL');
+                        parseAndAssign('T1_CRIMP_W', 'DIMENSIONAL');
+                        parseAndAssign('T1_INSULATION_W', 'DIMENSIONAL');
+                        parseAndAssign('T1_PULL_FORCE', 'PULL_FORCE');
+                        
+                        parseAndAssign('T2_CRIMP_H', 'DIMENSIONAL');
+                        parseAndAssign('T2_INSULATION_H', 'DIMENSIONAL');
+                        parseAndAssign('T2_CRIMP_W', 'DIMENSIONAL');
+                        parseAndAssign('T2_CRIMP_W', 'DIMENSIONAL'); // DUPED, but let's keep it consistent
+                        parseAndAssign('T2_INSULATION_W', 'DIMENSIONAL');
+                        parseAndAssign('T2_PULL_FORCE', 'PULL_FORCE');
+                        
+                        // 3. Parse LENGTH SPEC
+                        const lengthRaw = String(standardizedRow.LENGTH_SPEC || '').trim();
+                        const lengthMatch = lengthRaw.match(/(\d+(?:\.\d+)?)\s*[+-±]\s*(\d+(?:\.\d+)?)/); 
+
+                        if (lengthMatch) {
+                            newRow.BASE_LENGTH = parseFloat(lengthMatch[1]); 
+                            newRow.TOLERANCE = parseFloat(lengthMatch[2]);   
+                        } else {
+                            // If no tolerance is specified for length, assume fixed length with tolerance 0.
+                            const fixedLength = parseFloat(lengthRaw);
+                            if (!isNaN(fixedLength)) {
+                                newRow.BASE_LENGTH = fixedLength;
+                                newRow.TOLERANCE = 0; 
+                            } else {
+                                newRow.BASE_LENGTH = undefined;
+                                newRow.TOLERANCE = undefined;
+                            }
+                        }
+                        
+                        return newRow;
+                    }).filter(row => row.FG_PART_NO && row.CABLE_ID && row.BASE_LENGTH !== undefined); 
+                    // --- END MODIFIED ---
+
+                    refDataCard.className += ' bg-emerald-50 border border-emerald-400';
+                    
+                    // NEW: Populate the datalists with unique values
+                    populateDatalists(measuredDataLookup);
+                    
+                    showMessageBox(`Successfully loaded and parsed ${measuredDataLookup.length} valid records from Check Sheet. Specification values were converted to base numbers.`, 'success');
+
+                } catch (error) {
+                    refDataCard.className += ' bg-red-50 border border-red-400';
+
+                    showMessageBox(`Error processing file: ${error.message}`, 'error');
+                    measuredDataLookup = []; 
+                    populateDatalists([]); // Clear lists on error
+                } finally {
+                    event.target.value = '';
+                }
+            };
+
+            reader.onerror = function() {
+                refDataCard.className += ' bg-red-50 border border-red-400';
+
+                showMessageBox('Error reading the file.', 'error');
+                measuredDataLookup = [];
+                populateDatalists([]); // Clear lists on error
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+        // --- END FIXED Excel Upload Functions ---
+
+        // --- NEW: Downtime Logic (Modified for manual submit) ---
+        
+        /** Locks or unlocks the main Production Output submission card. */
+        function toggleProductionLock(lock) {
+            const inputs = submissionCard.querySelectorAll('input, select, button:not(#reset-button)');
+            inputs.forEach(input => {
+                // If locking, disable everything. If unlocking, re-enable everything that isn't an input/select
+                // (Input/select elements remain enabled/disabled based on their original state or the autoclear function)
+                if (input.id !== 'reset-button' && input.id !== 'fg-part-no-list' && input.id !== 'cable-id-list') {
+                     input.disabled = lock;
+                }
+            });
+
+            // Visually indicate the lock/unlock state
+            if (lock) {
+                submissionCard.style.opacity = '0.5';
+                submissionCard.classList.add('downtime-active-state');
+                showMessageBox('Production submission is blocked while Downtime is active.', 'warning');
+            } else {
+                submissionCard.style.opacity = '1.0';
+                submissionCard.classList.remove('downtime-active-state');
+                // The submitDowntime function will show a success message on its own
+            }
+        }
+        
+        /** Gets the current datetime in the format required for datetime-local input. */
+        function getCurrentDateTimeLocal() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
+        
+        /** Starts the downtime sequence. */
+        function startDowntime() {
+            if (!machineNameHidden.value) {
+                showMessageBox('Please connect to a machine room first.', 'error');
+                return;
+            }
+            if (isDowntimeActive) return;
+
+            isDowntimeActive = true;
+            downtimeStartTime = new Date();
+            pendingDowntimeData = null; // Clear any old pending data
+            
+            // Set Start Time to current datetime and enable End Time/Reason
+            const nowLocal = getCurrentDateTimeLocal();
+            downtimeStartInput.value = nowLocal;
+            downtimeEndInput.value = nowLocal; 
+            downtimeEndInput.disabled = false;
+            downtimeReasonInput.disabled = false;
+            downtimeTotalTimeInput.value = '0.00'; 
+            downtimeReasonInput.focus();
+
+            // Toggle UI state
+            startDowntimeButton.style.display = 'none';
+            endDowntimeButton.style.display = 'block';
+            submitDowntimeButton.style.display = 'none';
+            downtimeCard.classList.add('downtime-active-state');
+            downtimeStatusMessage.textContent = 'Downtime Active. Production is locked.';
+            
+            toggleProductionLock(true);
+            
+            showMessageBox('Downtime started. Fill in reason and end time when finished.', 'info');
+        }
+
+        /** Calculates the duration between start and end time. */
+        function calculateDowntime() {
+            if (!isDowntimeActive) return;
+            
+            const endTime = new Date(downtimeEndInput.value);
+            const startTime = new Date(downtimeStartInput.value);
+            
+            if (endTime <= startTime) {
+                downtimeTotalTimeInput.value = '0.00';
+                downtimeStatusMessage.textContent = 'End Time must be after Start Time.';
+                return;
+            }
+
+            // Calculate difference in milliseconds
+            const diffMs = endTime.getTime() - startTime.getTime();
+            // Convert to hours and round to 2 decimal places
+            const totalHours = (diffMs / (1000 * 60 * 60)).toFixed(2);
+            
+            downtimeTotalTimeInput.value = totalHours;
+            downtimeStatusMessage.textContent = `Downtime duration: ${totalHours} hours.`;
+        }
+        
+        /** Ends the downtime sequence, validates, and prepares data for manual submission. */
+    /** Ends the downtime clock and prepares data for manual submission. */
+function endDowntime() {
+    if (!isDowntimeActive) {
+        showMessageBox('Downtime is not currently active.', 'error');
+        return;
+    }
+    
+    // **FIX: Automatically set the End Time to the current time on button click.**
+    const nowLocal = getCurrentDateTimeLocal();
+    downtimeEndInput.value = nowLocal;
+
+    const startTime = new Date(downtimeStartInput.value);
+    const endTime = new Date(downtimeEndInput.value); // Now reads the current time
+
+    // 1. Validation check
+    if (endTime <= startTime) {
+        // Since we automatically set the time, this should only happen if the system clock moved backward.
+        downtimeTotalTimeInput.value = '0.00';
+        showMessageBox('Error: Calculated End Time is not after Start Time. Please check system clock or adjust manually.', 'error');
+        return;
+    }
+    if (downtimeReasonInput.value.trim() === '') {
+        showMessageBox('Please enter a reason for the downtime.', 'error');
+        return;
+    }
+    
+    // Calculate total time
+    const diffMs = endTime.getTime() - startTime.getTime();
+    const totalHours = (diffMs / (1000 * 60 * 60)).toFixed(2);
+    
+    // **ADDITION: Update the Total Time display (this was missing).**
+    downtimeTotalTimeInput.value = totalHours;
+
+    // 2. Prepare the data for submission
+    pendingDowntimeData = {
+    machine_name: machineNameHidden.value,
+    start_time: downtimeStartInput.value,
+    end_time: downtimeEndInput.value,
+    total_hours: totalHours,
+    reason: downtimeReasonInput.value.trim(),
+    // Add Shift and Operator Name for context
+    shift: document.getElementById('shift').value,
+    operator_name: document.getElementById('operator-name').value,
+    
+    // **FIX: ADD FG Part Number and Cable ID data**
+    fg_part_no: document.getElementById('fg-part-no').value || 'N/A',
+    cable_id: document.getElementById('cable-id').value || 'N/A',
+    
+    // Include Terminal APL NOs as requested
+    t1_apl_no: document.getElementById('t1-apl-no').value || 'N/A',
+    t2_apl_no: document.getElementById('t2-apl-no').value || 'N/A',
+    };
+    // 3. Lock the fields and buttons
+    downtimeEndInput.disabled = true;
+    downtimeReasonInput.disabled = true;
+    // 4. Toggle UI state to manual submission mode
+    endDowntimeButton.style.display = 'none';
+    submitDowntimeButton.style.display = 'block';
+    downtimeStatusMessage.textContent = 'Downtime ended. Review data and click "Submit Downtime". Production is still locked.';
+    showMessageBox('Downtime session ended. Review data and click "Submit Downtime".', 'info');
+}
+
+// 2. The function to open the modal and refresh the list
+function toggleHistoryModal() {
+    const modal = document.getElementById('history-modal');
+    const isOpening = modal.style.display === 'none' || modal.style.display === '';
+    
+    modal.style.display = isOpening ? 'flex' : 'none';
+    
+    if (isOpening) {
+        renderHistory();
+    }
+}
+
+// 3. The function that actually saves the data
+function addToHistory(type, details, val) {
+    const entry = {
+        type: type,
+        details: details,
+        value: val,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        date: new Date().toLocaleDateString()
+    };
+    
+    submissionHistory.unshift(entry); // Add to start of list
+    if (submissionHistory.length > 50) submissionHistory.pop(); // Keep only last 50
+    
+    localStorage.setItem('worker_history', JSON.stringify(submissionHistory));
+}
+
+// 4. The function that builds the HTML table
+function renderHistory() {
+    const tbody = document.getElementById('history-log-body');
+    const clearBtn = document.getElementById('clear-history-button');
+    if (!tbody) return;
+
+    if (submissionHistory.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-gray-400 font-medium">No data submitted yet today.</td></tr>';
+        if (clearBtn) { clearBtn.disabled = true; clearBtn.classList.add('opacity-50','cursor-not-allowed'); }
+        return;
+    }
+    if (clearBtn) { clearBtn.disabled = false; clearBtn.classList.remove('opacity-50','cursor-not-allowed'); }
+
+    tbody.innerHTML = submissionHistory.map(item => {
+        let badgeColor = "bg-gray-100 text-gray-600";
+        if (item.type === 'PRODUCTION') badgeColor = "bg-green-100 text-green-700";
+        if (item.type === 'DOWNTIME') badgeColor = "bg-red-100 text-red-700";
+        if (item.type === 'SCRAP') badgeColor = "bg-purple-100 text-purple-700";
+
+        return `
+            <tr class="border-b hover:bg-gray-50 transition-colors">
+                <td class="p-3">
+                    <span class="px-2 py-1 rounded text-[10px] font-bold uppercase ${badgeColor}">
+                        ${item.type}
+                    </span>
+                </td>
+                <td class="p-3 font-medium text-gray-700 text-xs">${item.details}</td>
+                <td class="p-3 font-bold text-blue-600 text-xs">${item.value}</td>
+                <td class="p-3 text-gray-400 text-[10px]">${item.date}<br>${item.time}</td>
+            </tr>
+        `;
+    }).join('');
+}
+        /** Submits the prepared downtime data and resets the session. */
+        function submitDowntime() {
+            if (!pendingDowntimeData) {
+                showMessageBox('No downtime data is ready for submission.', 'error');
+                return;
+                
+            }
+            
+            // Submit to socket
+            socket.emit('submit_downtime', pendingDowntimeData);
+            const reason = document.getElementById('downtime-reason').value;
+           const duration = document.getElementById('downtime-total-time').value;
+           addToHistory('DOWNTIME', `Reason: ${reason}`, `${duration} Hrs`);
+
+          // 1. Reset downtime state
+            isDowntimeActive = false;
+            downtimeStartTime = null;
+            pendingDowntimeData = null; // Clear the data
+            
+            // 2. Reset UI fields
+            downtimeStartInput.value = '';
+            downtimeEndInput.value = '';
+            downtimeReasonInput.value = '';
+            downtimeTotalTimeInput.value = '0.00';
+            
+            downtimeEndInput.disabled = true; // Set back to disabled
+            downtimeReasonInput.disabled = true; // Set back to disabled
+
+            // 3. Toggle UI state back to start mode
+            startDowntimeButton.style.display = 'block';
+            submitDowntimeButton.style.display = 'none';
+            downtimeCard.classList.remove('downtime-active-state');
+            downtimeStatusMessage.textContent = 'Downtime submitted. Ready for next entry.';
+            
+            toggleProductionLock(false); // Unlock production submission
+        }
+        // --- END NEW Downtime Logic ---
+
+
+        /** UPDATED FUNCTION: Submit Output with Pre-Submission Validation Check and ONLY sending manual data. */
+        function submitOutput() {
+            const machineName = machineNameHidden.value;
+            if (!machineName) {
+                showMessageBox('Error: Please connect to a Machine Room first!', 'error');
+                return; 
+            }
+            
+            // **NEW: Downtime Check**
+            if (isDowntimeActive) {
+                showMessageBox('Submission Blocked: Downtime is currently active. Please end downtime before submitting production output.', 'error');
+                return;
+            }
+            // **END NEW: Downtime Check**
+            
+            if (!document.querySelector('#entry-date').checkValidity() || !document.querySelector('#entry-time').checkValidity() || !document.querySelector('#shift').checkValidity() || !document.querySelector('#operator-name').checkValidity() || !document.querySelector('#fg-part-no').checkValidity() || !document.querySelector('#cable-id').checkValidity()) {
+                showMessageBox('Please fill in all general required fields.', 'error');
+                return;
+            }
+            
+            // --- NEW VALIDATION CHECK: Terminal Manual Input ---
+            const manualInputs = [
+                't1-crimp-height-manual', 't1-insulation-height-manual', 't1-crimp-width-manual', 
+                't1-insulation-width-manual', 't1-pull-force-manual', 
+                't2-crimp-height-manual', 't2-insulation-height-manual', 't2-crimp-width-manual', 
+                't2-insulation-width-manual', 't2-pull-force-manual'
+            ];
+            
+            let invalidInputFound = false;
+            let invalidFieldName = '';
+
+            for (const id of manualInputs) {
+                const input = document.getElementById(id);
+                // Check if the input has a value AND is marked as invalid (RED status) by the live validation function
+                if (input && input.value.trim() !== '' && input.getAttribute('data-invalid') === 'true') {
+                    invalidInputFound = true;
+                    // Get the label text for the error message
+                    const label = document.querySelector(`label[for="${id}"]`);
+                    invalidFieldName = label ? label.textContent.replace(':', '').trim() : id;
+                    break;
+                }
+            }
+            
+            if (invalidInputFound) {
+                showMessageBox(`Submission Blocked: The manual input for "${invalidFieldName}" does not meet the measurement specification (Red status). Please correct the value or clear the field to skip the measurement.`, 'error');
+                return; // STOP SUBMISSION
+            }
+            // --- END NEW VALIDATION CHECK ---
+
+            const qty = parseInt(document.getElementById('produced-qty').value);
+            const length = parseFloat(document.getElementById('produced-length').value);
+            const hours = parseFloat(document.getElementById('qty-produced-hours').value);
+
+            if (isNaN(qty) || qty < 1) {
+                 showMessageBox('Quantity must be a positive whole number.', 'error');
+                 return;
+            }
+            if (isNaN(length) || length <= 0) {
+                 showMessageBox('Length must be a positive number.', 'error');
+                 return;
+            }
+            if (isNaN(hours) || hours <= 0) {
+                 showMessageBox('Hours must be a positive number.', 'error');
+                 return;
+            }
+            
+            document.getElementById('message').textContent = 'Submitting data...';
+            document.getElementById('message').style.backgroundColor = '#EFF6FF';
+            document.getElementById('message').style.color = '#1E40AF';
+
+            // **MODIFIED: ONLY SEND MANUAL INPUTS, NOT MEASURED INPUTS**
+            const data = {
+                shift: document.getElementById('shift').value,
+                operator_name: document.getElementById('operator-name').value, 
+                machine_name: machineName,
+                fg_part_no: document.getElementById('fg-part-no').value,
+                cable_id: document.getElementById('cable-id').value,
+                produced_qty: qty,
+                produced_length: length,
+                qty_produced_hours: hours,
+                entry_date: document.getElementById('entry-date').value, 
+                entry_time: document.getElementById('entry-time').value,
+                
+                // Terminal 1 (IDs + Manual Data)
+                t1_terminal_id: document.getElementById('t1-terminal-id').value,
+                t1_apl_no: document.getElementById('t1-apl-no').value,
+                // Only send data if the input field is not empty, otherwise send null/undefined to avoid 'NaN' in database
+                t1_crimp_height_manual: document.getElementById('t1-crimp-height-manual').value.trim() !== '' ? parseFloat(document.getElementById('t1-crimp-height-manual').value) : null,
+                t1_insulation_height_manual: document.getElementById('t1-insulation-height-manual').value.trim() !== '' ? parseFloat(document.getElementById('t1-insulation-height-manual').value) : null,
+                t1_crimp_width_manual: document.getElementById('t1-crimp-width-manual').value.trim() !== '' ? parseFloat(document.getElementById('t1-crimp-width-manual').value) : null,
+                t1_insulation_width_manual: document.getElementById('t1-insulation-width-manual').value.trim() !== '' ? parseFloat(document.getElementById('t1-insulation-width-manual').value) : null,
+                t1_pull_force_manual: document.getElementById('t1-pull-force-manual').value.trim() !== '' ? parseFloat(document.getElementById('t1-pull-force-manual').value) : null,
+                
+                // Terminal 2 (IDs + Manual Data)
+                t2_terminal_id: document.getElementById('t2-terminal-id').value,
+                t2_apl_no: document.getElementById('t2-apl-no').value,
+                t2_crimp_height_manual: document.getElementById('t2-crimp-height-manual').value.trim() !== '' ? parseFloat(document.getElementById('t2-crimp-height-manual').value) : null,
+                t2_insulation_height_manual: document.getElementById('t2-insulation-height-manual').value.trim() !== '' ? parseFloat(document.getElementById('t2-insulation-height-manual').value) : null,
+                t2_crimp_width_manual: document.getElementById('t2-crimp-width-manual').value.trim() !== '' ? parseFloat(document.getElementById('t2-crimp-width-manual').value) : null,
+                t2_insulation_width_manual: document.getElementById('t2-insulation-width-manual').value.trim() !== '' ? parseFloat(document.getElementById('t2-insulation-width-manual').value) : null,
+                t2_pull_force_manual: document.getElementById('t2-pull-force-manual').value.trim() !== '' ? parseFloat(document.getElementById('t2-pull-force-manual').value) : null,
+            };
+
+            socket.emit('submit_output', data);
+            addToHistory('PRODUCTION', `Part: ${document.getElementById('fg-part-no').value}`, `${document.getElementById('produced-qty').value} Pcs`);
+
+            // **MODIFIED: Clear only production fields, keeping Shift/Operator Name**
+            clearProductionFields(); 
+
+            document.getElementById('message').textContent = 'Output submitted successfully! Ready for next entry.';
+            setTimeout(() => { document.getElementById('message').textContent = ''; }, 3000); 
+        }
+
+        socket.on('join_confirm', (data) => {
+            if (data.success) {
+                roomStatus.textContent = `Connected to room: ${data.machineName}. Plan loaded.`;
+                roomStatus.className = 'text-xs mt-1 font-bold text-green-700';
+                connectionCard.style.backgroundColor = '#F0FFF4';
+                connectionCard.style.borderColor = '#34D399';
+                // Request archived plan history for this machine
+                socket.emit('request_plan_history', { machineName: data.machineName });
+            } else {
+                roomStatus.textContent = `Error connecting: ${data.reason}`;
+                roomStatus.className = 'text-xs mt-1 font-bold text-red-700';
+                machineNameInput.disabled = false;
+                document.getElementById('machine-password-input').disabled = false;
+                document.getElementById('join-room-button').disabled = false;
+            }
+        });
+        
+        socket.on('update_worker_plan', (data) => {
+            if (data.machineName !== machineNameHidden.value) return;
+            // Server controls whether the incoming plan is active or queued. Display active plan updates immediately.
+            displayPlanSheet(Array.isArray(data.plan) ? data.plan : [], data.machineName);
+        });
+
+        // Listen for queue size updates from the server
+        socket.on('queued_plan_count', (data) => {
+            if (data.machineName !== machineNameHidden.value) return;
+            serverQueuedCount = parseInt(data.count) || 0;
+            const count = document.getElementById('next-plan-count');
+            if (count) count.textContent = serverQueuedCount;
+            updateViewNextButton();
+        });
+
+        // When a dequeue completes on server (worker requested next plan), server will send the new plan here
+        socket.on('dequeued_plan', (data) => {
+            if (data.machineName !== machineNameHidden.value) return;
+            displayPlanSheet(Array.isArray(data.plan) ? data.plan : [], data.machineName);
+            showMessageBox('Dequeued plan loaded.', 'success');
+            // After dequeuing, request updated history (server emits plan_history_update too, but request ensures sync)
+            socket.emit('request_plan_history', { machineName: data.machineName });
+        });
+
+        socket.on('dequeue_failed', (data) => {
+            if (data.machineName !== machineNameHidden.value) return;
+            showMessageBox(`No queued plans available.`, 'warning');
+        });
+
+        // Server pushed history update
+        socket.on('plan_history_update', (data) => {
+            if (data.machineName !== machineNameHidden.value) return;
+            planHistory = Array.isArray(data.history) ? data.history : [];
+            renderPlanHistoryList();
+        });
+
+        // Response to explicit request for history
+        socket.on('plan_history', (data) => {
+            if (data.machineName !== machineNameHidden.value) return;
+            planHistory = Array.isArray(data.history) ? data.history : [];
+            renderPlanHistoryList();
+        });
+
+        socket.on('submission_success', (data) => {
+             document.getElementById('message').textContent = 'Output submitted successfully!';
+             setTimeout(() => {
+                 document.getElementById('message').textContent = '';
+             }, 3000);
+        });
+        
+        // NEW: Handle Downtime Submission Success
+        socket.on('downtime_submission_success', (data) => {
+             showMessageBox(`Downtime logged successfully! Duration: ${data.total_hours} hours.`, 'success');
+        });
+        
+        socket.on('live_message', (data) => {
+            showMessageBox(data.message, 'info');
+        });
+
+        function displayPlanSheet(plan, machineName) {
+            currentPlan = Array.isArray(plan) ? plan : [];
+            currentPlanMachine.textContent = machineName;
+            
+            if (currentPlan.length === 0) {
+                planDataView.innerHTML = '<p class="text-gray-500 italic text-sm">No plan sheet assigned for this machine.</p>';
+                updateViewNextButton();
+                return;
+            }
+
+            let tableHTML = '<table id="plan-sheet-table"><thead><tr>';
+            
+            const headers = Object.keys(currentPlan[0]);
+            const displayHeaders = headers.filter(h => h !== 'line_id');
+
+            displayHeaders.forEach(header => {
+                const shortHeader = header.toUpperCase().replace(/_/g, ' ').replace('IDENTIFICATION', 'ID').replace('NUMBER', 'NO');
+                tableHTML += `<th>${shortHeader}</th>`;
+            });
+            tableHTML += '<th>ACTION</th>'; 
+            tableHTML += '</tr></thead><tbody>';
+
+            currentPlan.forEach(row => {
+                const isCompleted = row.status === 'completed';
+                const rowClass = isCompleted ? 'plan-completed' : '';
+                
+                tableHTML += `<tr class="${rowClass}">`;
+                
+                displayHeaders.forEach(header => {
+                    if (header === 'status') {
+                        const statusText = isCompleted ? '✅ DONE' : '🕒 PENDING';
+                         tableHTML += `<td>${statusText}</td>`;
+                    } else {
+                        tableHTML += `<td>${row[header] || ''}</td>`;
+                    }
+                });
+                
+                const buttonText = isCompleted ? 'Completed' : 'Mark Done';
+                const buttonClass = isCompleted ? 'complete-button-completed' : 'complete-button-pending';
+                const buttonAction = isCompleted ? '' : `onclick="markPlanLineComplete('${row.line_id}')"`;
+                
+                tableHTML += `<td><button class="complete-button ${buttonClass}" ${buttonAction} ${isCompleted ? 'disabled' : ''}>${buttonText}</button></td>`;
+                tableHTML += '</tr>';
+            });
+
+            tableHTML += '</tbody></table>';
+            planDataView.innerHTML = tableHTML;
+
+            // Update the 'View Next Plan' button visibility (server provides the count)
+            updateViewNextButton();
+        }
+
+        // --- Plan Queue Helper Functions ---
+        function hasPendingRows(plan) {
+            return Array.isArray(plan) && plan.some(r => r.status !== 'completed');
+        }
+
+        // Client no longer deduplicates plans locally; server maintains the queue.
+        function updateViewNextButton() {
+            const btn = document.getElementById('view-next-plan-button');
+            const queuedBtn = document.getElementById('view-queued-button');
+            const count = document.getElementById('next-plan-count');
+            const badge = document.getElementById('next-plan-badge');
+            if (!btn || !count || !badge) return;
+
+            count.textContent = serverQueuedCount;
+            // Badge is always visible but will display '0' when empty
+            badge.style.display = 'inline-flex';
+
+            if (serverQueuedCount > 0) {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                if (queuedBtn) {
+                    queuedBtn.disabled = false;
+                    queuedBtn.classList.remove('opacity-40');
+                }
+            } else {
+                btn.disabled = true;
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+                if (queuedBtn) {
+                    queuedBtn.disabled = true;
+                    queuedBtn.classList.add('opacity-40');
+                }
+            }
+        }
+
+        // ---------------- Plan History UI Helpers ----------------
+        function openPlanHistoryModal() {
+            const modal = document.getElementById('plan-history-modal');
+            if (!modal) return;
+            modal.style.display = 'flex';
+            // Request latest history from server (ensures sync)
+            socket.emit('request_plan_history', { machineName: machineNameHidden.value });
+        }
+
+        function closePlanHistoryModal() {
+            const modal = document.getElementById('plan-history-modal');
+            if (!modal) return;
+            modal.style.display = 'none';
+        }
+
+        function renderPlanHistoryList() {
+            const list = document.getElementById('plan-history-list');
+            const detailTitle = document.getElementById('archived-detail-title');
+            const detailView = document.getElementById('archived-detail-view');
+            if (!list || !detailView || !detailTitle) return;
+
+            if (!Array.isArray(planHistory) || planHistory.length === 0) {
+                list.innerHTML = '<div class="text-sm text-gray-500">No archived plans for this machine.</div>';
+                detailTitle.textContent = 'Select an archived plan to preview';
+                detailView.innerHTML = '';
+                return;
+            }
+
+            list.innerHTML = planHistory.map((entry, idx) => {
+                const date = entry.archived_at ? new Date(entry.archived_at).toLocaleString() : 'Unknown';
+                const total = Array.isArray(entry.plan) ? entry.plan.length : 0;
+                return `<div data-idx="${idx}" id="history-entry-${idx}" style="padding:8px;border-bottom:1px solid #f1f1f1;display:flex;justify-content:space-between;align-items:center;gap:8px;">
+                            <div style="font-size:13px;">${date}<div style='font-size:11px;color:#6b7280'>${total} lines</div></div>
+                            <div><button data-idx="${idx}" class="preview-btn bg-indigo-600 text-white px-3 py-1 rounded text-xs">Preview</button></div>
+                        </div>`;
+            }).join('');
+
+            // Attach event listeners to preview buttons (avoid relying on inline onclick)
+            const buttons = list.querySelectorAll('.preview-btn');
+            buttons.forEach(btn => {
+                const idx = parseInt(btn.getAttribute('data-idx'));
+                btn.addEventListener('click', () => {
+                    viewArchivedPlan(idx);
+                });
+            });
+
+            // Auto-select the most recent for preview
+            viewArchivedPlan(planHistory.length - 1);
+        }
+
+        function viewArchivedPlan(index) {
+            const entry = planHistory[index];
+            if (!entry) return;
+            viewingArchived = true;
+            archivedViewIndex = index;
+
+            // Highlight selected entry in the list
+            const prevSelected = document.querySelector('#plan-history-list .selected-entry');
+            if (prevSelected) prevSelected.classList.remove('selected-entry');
+            const selectedEl = document.getElementById(`history-entry-${index}`);
+            if (selectedEl) selectedEl.classList.add('selected-entry');
+
+            const title = document.getElementById('archived-detail-title');
+            const detail = document.getElementById('archived-detail-view');
+            const date = entry.archived_at ? new Date(entry.archived_at).toLocaleString() : 'Unknown';
+            title.innerHTML = `Archived Plan — ${date} <button type="button" id="open-large-arch-btn" onclick="openLargePreview()" class="ml-3 bg-gray-100 px-2 py-1 rounded text-sm">Open Large</button> <button type="button" id="back-to-active-btn" class="ml-3 bg-gray-100 px-2 py-1 rounded text-sm">Back to Active</button>`;
+
+            // Add event handler for 'Open Large' to preview full-size
+            const openLargeBtn = document.getElementById('open-large-arch-btn');
+            if (openLargeBtn) {
+                lastPreviewContext = { plan: entry.plan, machine: currentPlanMachine.textContent, plan_name: `Archived — ${date}` };
+                console.debug('archived preview set', lastPreviewContext);
+                openLargeBtn.addEventListener('click', openLargePreview);
+            }
+
+            // Add event handler for 'Back to Active' button to render active plan inside the modal
+            const backBtn = document.getElementById('back-to-active-btn');
+            if (backBtn) {
+                backBtn.addEventListener('click', () => {
+                    backToActivePlan();
+                });
+            }
+
+            detail.innerHTML = renderPlanTable(entry.plan, currentPlanMachine.textContent);
+        }
+
+        function backToActivePlan() {
+            viewingArchived = false;
+            archivedViewIndex = null;
+            const title = document.getElementById('archived-detail-title');
+            const detail = document.getElementById('archived-detail-view');
+            if (title) title.textContent = 'Active Plan Preview';
+            if (detail) detail.innerHTML = renderPlanTable(currentPlan, currentPlanMachine.textContent);
+            // Also visually clear any selected archived entry
+            const prevSelected = document.querySelector('#plan-history-list .selected-entry');
+            if (prevSelected) prevSelected.classList.remove('selected-entry');
+        }
+
+        function viewNextPlan() {
+            if (serverQueuedCount === 0) return;
+            // Ask server to dequeue and activate the next plan for this machine
+            document.getElementById('view-next-plan-button').disabled = true;
+            socket.emit('request_dequeue_plan', { machineName: machineNameHidden.value });
+        }
+
+        // Queued preview modal helpers
+        function openQueuedModal() {
+            const modal = document.getElementById('queued-modal');
+            if (!modal) return;
+            modal.style.display = 'flex';
+            // Request queued plans from server (preview-only, no dequeue)
+            socket.emit('request_queued_plans', { machineName: machineNameHidden.value });
+        }
+
+        function closeQueuedModal() {
+            const modal = document.getElementById('queued-modal');
+            if (!modal) return;
+            modal.style.display = 'none';
+            queuedPlans = [];
+            renderQueuedList();
+            const pane = document.getElementById('queued-preview-pane');
+            if (pane) pane.innerHTML = '<div class="p-4 text-gray-500">No queued plan selected</div>';
+        }
+
+        function renderQueuedList() {
+            const list = document.getElementById('queued-list');
+            if (!list) return;
+            if (!Array.isArray(queuedPlans) || queuedPlans.length === 0) {
+                list.innerHTML = '<div class="text-sm text-gray-500">No queued plans for this machine.</div>';
+                document.getElementById('queued-detail-title').textContent = 'Select a queued plan to preview';
+                document.getElementById('queued-preview-pane').innerHTML = '';
+                return;
+            }
+
+            list.innerHTML = queuedPlans.map((p, idx) => {
+                // queued entry may be a raw plan array (uploaded without metadata) or an object with metadata
+                const planName = p && p.plan_name ? p.plan_name : `Queued Plan (${Array.isArray(p) ? p.length : (p.plan ? p.plan.length : '?')} lines)`;
+                const machineLabel = p && p.machine_name ? p.machine_name : currentPlanMachine.textContent || machineNameHidden.value || '';
+                return `<div data-idx="${idx}" id="queued-entry-${idx}" style="padding:8px;border-bottom:1px solid #f1f1f1;display:flex;justify-content:space-between;align-items:center;gap:8px;">
+                            <div style="font-size:13px;">${planName}<div style='font-size:11px;color:#6b7280'>${machineLabel}</div></div>
+                            <div><button data-idx="${idx}" class="preview-queued-btn bg-yellow-500 text-white px-3 py-1 rounded text-xs">Preview</button></div>
+                        </div>`;
+            }).join('');
+
+            const buttons = list.querySelectorAll('.preview-queued-btn');
+            buttons.forEach(btn => {
+                const idx = parseInt(btn.getAttribute('data-idx'));
+                btn.addEventListener('click', () => {
+                    viewQueuedPlan(idx);
+                });
+            });
+
+            // Auto-select the first queued plan for convenience
+            viewQueuedPlan(0);
+        }
+
+        function viewQueuedPlan(idx) {
+            const p = queuedPlans[idx];
+            if (!p) return;
+            const title = document.getElementById('queued-detail-title');
+            const detail = document.getElementById('queued-preview-pane');
+            const planName = p && p.plan_name ? p.plan_name : `Queued Plan (${Array.isArray(p) ? p.length : (p.plan ? p.plan.length : '?')} lines)`;
+            const machineLabel = p && p.machine_name ? p.machine_name : currentPlanMachine.textContent || machineNameHidden.value || '';
+            // p may be an array or an object with .plan
+            const planToRender = Array.isArray(p) ? p : (p.plan || p);
+            // Save last preview context for large preview action
+            lastPreviewContext = { plan: planToRender, machine: machineLabel, plan_name: planName };
+            console.debug('queued preview set', lastPreviewContext);
+            title.innerHTML = `Queued Plan — <span class="text-sm text-gray-500">${planName}</span> <button type="button" id="open-large-queued-btn" onclick="openLargePreview()" class="ml-3 bg-gray-100 px-2 py-1 rounded text-sm">Open Large</button>`;
+            detail.innerHTML = renderPlanTable(planToRender, machineLabel);
+            // attach open large button listener
+            const openBtn = document.getElementById('open-large-queued-btn');
+            if (openBtn) openBtn.addEventListener('click', openLargePreview);
+            // visually highlight selection
+            const prev = document.querySelector('#queued-list .selected-entry');
+            if (prev) prev.classList.remove('selected-entry');
+            const sel = document.getElementById(`queued-entry-${idx}`);
+            if (sel) sel.classList.add('selected-entry');
+        }
+
+        let lastPreviewContext = null;
+
+        // socket listener for queued plans (preview without dequeuing)
+        socket.on('queued_plans', (data) => {
+            if (data.machineName && data.machineName !== machineNameHidden.value) return;
+            queuedPlans = data.queued_plans || [];
+            renderQueuedList();
+        });
+
+        // Open a larger in-page preview modal for convenience (preview-only)
+        function openLargePreview() {
+            console.debug('openLargePreview called', lastPreviewContext);
+            const modal = document.getElementById('large-preview-modal');
+            const title = document.getElementById('large-preview-title');
+            const content = document.getElementById('large-preview-content');
+
+            // If we have context, render using renderer
+            if (lastPreviewContext && lastPreviewContext.plan) {
+                title.textContent = lastPreviewContext.plan_name || 'Plan Preview';
+                content.innerHTML = renderPlanTable(lastPreviewContext.plan, lastPreviewContext.machine);
+            } else {
+                // Fallback: try to copy rendered preview pane HTML into large modal
+                const queuedPane = document.getElementById('queued-preview-pane');
+                const archivedPane = document.getElementById('archived-detail-view');
+                if (queuedPane && queuedPane.innerHTML.trim()) {
+                    title.textContent = 'Queued Plan Preview';
+                    content.innerHTML = queuedPane.innerHTML;
+                    console.debug('openLargePreview: used queued pane fallback');
+                } else if (archivedPane && archivedPane.innerHTML.trim()) {
+                    title.textContent = 'Archived Plan Preview';
+                    content.innerHTML = archivedPane.innerHTML;
+                    console.debug('openLargePreview: used archived pane fallback');
+                } else {
+                    console.debug('openLargePreview: no context and no preview pane found');
+                    showMessageBox('No plan selected to preview. Click a plan and try Open Large again.', 'warning');
+                    return;
+                }
+            }
+
+            if (modal) {
+                modal.style.display = 'flex';
+                // Ensure the modal is focusable and focused (helps keyboard & Edge behavior)
+                modal.setAttribute('tabindex', '-1');
+                modal.focus();
+            }
+        }
+
+        function closeLargePreview() {
+            const modal = document.getElementById('large-preview-modal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        // Quick print helper (opens print dialog with content)
+        function printLargePreview() {
+            if (!lastPreviewContext || !lastPreviewContext.plan) return;
+            const contentHtml = document.getElementById('large-preview-content').innerHTML;
+            const w = window.open('', '_blank', 'noopener');
+            if (!w) return;
+            w.document.write('<html><head><title>Print Plan</title></head><body>' + contentHtml + '</body></html>');
+            w.document.close();
+            w.focus();
+            w.print();
+        }
+
+        // Close modal when clicking the overlay (outside modal content)
+        (function(){
+            const modal = document.getElementById('large-preview-modal');
+            if (modal) {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) closeLargePreview();
+                });
+            }
+            // Close with Escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeLargePreview();
+            });
+
+            // Delegated click handler as a robust fallback for preview and Open Large buttons
+            document.addEventListener('click', (e) => {
+                const target = e.target;
+                if (!target) return;
+
+                // queued list preview buttons
+                if (target.classList && target.classList.contains('preview-queued-btn')) {
+                    const idx = parseInt(target.getAttribute('data-idx'));
+                    if (!isNaN(idx)) {
+                        console.debug('Delegated preview-queued-btn click, idx=', idx);
+                        viewQueuedPlan(idx);
+                    }
+                    return;
+                }
+
+                // archived history preview buttons
+                if (target.classList && target.classList.contains('preview-btn')) {
+                    const idx = parseInt(target.getAttribute('data-idx'));
+                    if (!isNaN(idx)) {
+                        console.debug('Delegated archived preview click, idx=', idx);
+                        viewArchivedPlan(idx);
+                    }
+                    return;
+                }
+
+                // Open large buttons fallback
+                if (target.id === 'open-large-queued-btn' || target.id === 'open-large-arch-btn') {
+                    setTimeout(() => { openLargePreview(); }, 10);
+                }
+            });
+        })();
+
+        let messageTimeout;
+        
+        function showMessageBox(message, type = 'info') {
+            const colors = {
+                'success': { bg: '#10B981', border: '#34D399', icon: '✅' },
+                'error': { bg: '#EF4444', border: '#F87171', icon: '❌' },
+                'warning': { bg: '#F59E0B', border: '#FCD34D', icon: '⚠️' },
+                // FIX: Added missing quote and comma here
+                'info': { bg: '#3B82F6', border: '#60A5FA', icon: '💬' } 
+            };
+            const style = colors[type] || colors['info'];
+
+            messageContent.innerHTML = `${style.icon} ${message}`;
+            messageBox.style.backgroundColor = style.bg;
+            messageBox.style.borderLeftColor = style.border;
+            messageBox.classList.add('active');
+            
+            if (messageTimeout) {
+                clearTimeout(messageTimeout);
+            }
+            
+            messageTimeout = setTimeout(() => {
+                hideMessageBox();
+            }, 10000);
+        }
+        
+        function hideMessageBox() {
+            messageBox.classList.remove('active');
+            if (messageTimeout) {
+                clearTimeout(messageTimeout);
+                messageTimeout = null;
+            }
+        }
+
+        if (machineNameInput.value.trim()) {
+            joinMachineRoom();
+        }
+        let scrapSerialCounter = 1;
+
+// --- 1. THE MISSING CLOSE FUNCTION ---
+function closeScrapModal() {
+    const modal = document.getElementById('scrap-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+function openScrapModal() {
+    const machine = document.getElementById('machine-name-input').value;
+    const fg = document.getElementById('fg-part-no').value;
+    const cable = document.getElementById('cable-id').value;
+    const len = document.getElementById('produced-length').value;
+    const t1 = document.getElementById('t1-terminal-id').value;
+    const t2 = document.getElementById('t2-terminal-id').value;
+
+    if (!machine) { alert("Please connect machine first."); return; }
+    if (!fg) { alert("Please load FG details."); return; }
+
+    document.getElementById('scrap-fg-part').value = fg;
+    document.getElementById('scrap-cable-id').value = cable;
+    document.getElementById('scrap-unit-length').value = len || 0;
+    document.getElementById('scrap-serial-display').innerText = String(scrapSerialCounter).padStart(3, '0');
+    
+    document.getElementById('label-scrap-t1-id').innerText = t1 ? "T1: " + t1 : "T1: NONE";
+    document.getElementById('label-scrap-t2-id').innerText = t2 ? "T2: " + t2 : "T2: NONE";
+
+    // Reset reason controls
+    const sel = document.getElementById('scrap-reason');
+    if (sel) sel.value = '';
+    const other = document.getElementById('scrap-reason-other');
+    if (other) { other.value = ''; other.style.display = 'none'; }
+
+    document.getElementById('scrap-modal').style.display = 'flex';
+}
+
+function calculateScrapTotals() {
+    const isSample = document.getElementById('scrap-use-sample').checked;
+    const qtyInput = document.getElementById('scrap-qty');
+    let qty = parseFloat(qtyInput.value) || 0;
+
+    let unitLengthMm = 0;
+    if (isSample) {
+        unitLengthMm = 100; // 100mm
+        if (qtyInput.value === '') { qtyInput.value = 1; qty = 1; }
+    } else {
+        unitLengthMm = parseFloat(document.getElementById('produced-length').value) || 0;
+    }
+
+    document.getElementById('scrap-unit-length').value = unitLengthMm;
+    
+    const totalMeters = (unitLengthMm / 1000) * qty;
+    document.getElementById('scrap-total-length-display').innerHTML = totalMeters.toFixed(3) + ' <span class="text-lg">Meters</span>';
+}
+
+// --- 2. THE CLEAN SUBMIT FUNCTION (Fixed Double Sending) ---
+function submitScrap() {
+    const qty = parseFloat(document.getElementById('scrap-qty').value) || 0;
+    const isSample = document.getElementById('scrap-use-sample').checked;
+    
+    // FIX: Determine unit length based on the checkbox state
+    // 0.1 meters = 100mm
+    const unitLenFromForm = parseFloat(document.getElementById('produced-length').value) || 0;
+    const unitLengthMeters = isSample ? 0.1 : (unitLenFromForm / 1000);
+
+    // Read reason from select and handle 'Other' case with validation
+    const reasonSelect = document.getElementById('scrap-reason');
+    let reason = reasonSelect ? reasonSelect.value : '';
+    if (!reason) {
+        showMessageBox('Please select a reason for scrap.', 'error');
+        return;
+    }
+    if (reason === 'OTHER') {
+        const otherText = (document.getElementById('scrap-reason-other').value || '').trim();
+        if (!otherText) { showMessageBox('Please specify the scrap reason.', 'error'); return; }
+        reason = otherText;
+    }
+
+    const scrapData = {
+        serial: scrapSerialCounter,
+        machine: document.getElementById('machine-name-input') ? document.getElementById('machine-name-input').value : '',
+        fg_part: document.getElementById('scrap-fg-part').value,
+        cable_id: document.getElementById('scrap-cable-id').value,
+        component_type: "3",
+        cable_qty: qty,
+        t1_id: document.getElementById('label-scrap-t1-id').innerText.replace('T1: ', ''),
+        t1_qty: parseInt(document.getElementById('scrap-t1-qty').value) || 0,
+        t2_id: document.getElementById('label-scrap-t2-id').innerText.replace('T2: ', ''),
+        t2_qty: parseInt(document.getElementById('scrap-t2-qty').value) || 0,
+        total_meters: (unitLengthMeters * qty).toFixed(3),
+        reason: reason,
+        batch: document.getElementById('scrap-picklist').value || '',
+        timestamp: new Date().toLocaleString()
+    };
+
+    // Debug: log payload
+    try {
+        console.debug('submitScrap - payload:', scrapData);
+    } catch (e) { console.warn('Debug log failed', e); }
+
+    // Send only ONCE (ensure socket is connected)
+    if (typeof socket !== 'undefined' && socket && socket.connected) {
+        // If server supports ack callback, log it
+        try {
+            socket.emit('submit_scrap_data', scrapData, (ack) => { console.debug('submit_scrap_data ack', ack); });
+        } catch (e) {
+            // Fallback to simple emit
+            socket.emit('submit_scrap_data', scrapData);
+        }
+    } else {
+        showMessageBox('Error: Not connected to server. Scrap not sent.', 'error');
+        return;
+    }
+
+    // 2. Add to history (ENSURE ONLY ONE CALL EXISTS HERE)
+    const sPart = document.getElementById('scrap-fg-part').value;
+    const sLen = document.getElementById('scrap-total-length-display').innerText;
+    addToHistory('SCRAP', `Scrap: ${sPart}`, sLen);
+ 
+
+    // RESET FIELDS
+    document.getElementById('scrap-qty').value = "";
+    document.getElementById('scrap-t1-qty').value = "";
+    document.getElementById('scrap-t2-qty').value = "";
+    const selReset = document.getElementById('scrap-reason'); if (selReset) selReset.value = '';
+    const otherReset = document.getElementById('scrap-reason-other'); if (otherReset) { otherReset.value = ''; otherReset.style.display = 'none'; }
+    document.getElementById('scrap-picklist').value = "";
+    document.getElementById('scrap-total-length-display').innerHTML = '0.000 <span class="text-lg">Meters</span>';
+
+    scrapSerialCounter++;
+    closeScrapModal();
+    alert("Scrap Booked Successfully!");
+
+    // Success Indicator
+    const indicator = document.createElement('div');
+    indicator.className = "fixed bottom-5 right-5 bg-green-600 text-white px-4 py-2 rounded-full text-xs font-bold shadow-lg z-[10000]";
+    indicator.innerHTML = `✅ Scrap SN-${scrapData.serial} Sent Successfully`;
+    document.body.appendChild(indicator);
+    setTimeout(() => indicator.remove(), 3000);
+}
+// 1. Initialize the history array from storage
+let submissionHistory = JSON.parse(localStorage.getItem('worker_history')) || [];
+
+// 2. The function to open/close the modal
+function toggleHistoryModal() {
+    const modal = document.getElementById('history-modal');
+    const isOpening = modal.style.display === 'none' || modal.style.display === '';
+    modal.style.display = isOpening ? 'flex' : 'none';
+    if (isOpening) renderHistory();
+}
+
+// 3. The function that saves the data to the list
+function addToHistory(type, details, val) {
+    const entry = {
+        type: type,
+        details: details,
+        value: val,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        date: new Date().toLocaleDateString()
+    };
+    submissionHistory.unshift(entry); // Add to top
+    if (submissionHistory.length > 50) submissionHistory.pop(); // Keep last 50
+    localStorage.setItem('worker_history', JSON.stringify(submissionHistory));
+}
+
+// 4. The function that builds the table rows
+function renderHistory() {
+    const tbody = document.getElementById('history-log-body');
+    const clearBtn = document.getElementById('clear-history-button');
+    if (submissionHistory.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-gray-400">No data submitted yet.</td></tr>';
+        if (clearBtn) { clearBtn.disabled = true; clearBtn.classList.add('opacity-50','cursor-not-allowed'); }
+        return;
+    }
+    if (clearBtn) { clearBtn.disabled = false; clearBtn.classList.remove('opacity-50','cursor-not-allowed'); }
+    tbody.innerHTML = submissionHistory.map(item => `
+        <tr class="border-b hover:bg-gray-50 text-xs">
+            <td class="p-3"><span class="px-2 py-1 rounded font-bold ${item.type === 'PRODUCTION' ? 'bg-green-100 text-green-700' : item.type === 'DOWNTIME' ? 'bg-red-100 text-red-700' : 'bg-purple-100 text-purple-700'}">${item.type}</span></td>
+            <td class="p-3 font-medium">${item.details}</td>
+            <td class="p-3 font-bold text-blue-600">${item.value}</td>
+            <td class="p-3 text-gray-400 text-[10px]">${item.date}<br>${item.time}</td>
+        </tr>
+    `).join('');
+}
+
+function clearSubmissionHistory() {
+    if (!submissionHistory || submissionHistory.length === 0) {
+        showMessageBox('No submission history to clear.', 'info');
+        return;
+    }
+    if (!confirm('Clear submission history? This action cannot be undone.')) return;
+    submissionHistory = [];
+    localStorage.removeItem('worker_history');
+    renderHistory();
+    showMessageBox('Submission history cleared.', 'success');
+}
+
+    </script>
+</body>
+</html>

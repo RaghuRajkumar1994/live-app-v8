@@ -1,0 +1,98 @@
+{
+    "plans": {
+        "AUM-002": [
+            {
+                "CUSTOMER": "ITW- Pune",
+                "PART NO": "BA00005310",
+                "A": "1000.0",
+                "B": "1000.0",
+                "C": "1000.0",
+                "line_id": "AUM-002_1",
+                "status": "completed"
+            },
+            {
+                "CUSTOMER": "JOYSON- Neemrana",
+                "PART NO": "1169194-AB",
+                "A": "1000.0",
+                "B": "1000.0",
+                "C": "1000.0",
+                "line_id": "AUM-002_2",
+                "status": "pending"
+            },
+            {
+                "CUSTOMER": "JOYSON- Neemrana",
+                "PART NO": "1169195-AA",
+                "A": "1100.0",
+                "B": "1100.0",
+                "C": "1100.0",
+                "line_id": "AUM-002_3",
+                "status": "pending"
+            },
+            {
+                "CUSTOMER": "JOYSON- Mahindra City",
+                "PART NO": "1182738-AB",
+                "A": "1200.0",
+                "B": "1200.0",
+                "C": "1200.0",
+                "line_id": "AUM-002_4",
+                "status": "pending"
+            },
+            {
+                "CUSTOMER": "JOYSON- Mahindra City",
+                "PART NO": "1182740-AB",
+                "A": "0.0",
+                "B": "0.0",
+                "C": "0.0",
+                "line_id": "AUM-002_5",
+                "status": "pending"
+            },
+            {
+                "CUSTOMER": "RANE- MM Nagar",
+                "PART NO": "34299213A",
+                "A": "2500.0",
+                "B": "2500.0",
+                "C": "2500.0",
+                "line_id": "AUM-002_6",
+                "status": "pending"
+            },
+            {
+                "CUSTOMER": "RANE- MM Nagar",
+                "PART NO": "34299211B",
+                "A": "1200.0",
+                "B": "1200.0",
+                "C": "1200.0",
+                "line_id": "AUM-002_7",
+                "status": "pending"
+            },
+            {
+                "CUSTOMER": "TATA FICOSA- Pune",
+                "PART NO": "31020311X017",
+                "A": "900.0",
+                "B": "900.0",
+                "C": "900.0",
+                "line_id": "AUM-002_8",
+                "status": "pending"
+            },
+            {
+                "CUSTOMER": "Interface- ",
+                "PART NO": "27-71-306-1-0",
+                "A": "0.0",
+                "B": "0.0",
+                "C": "0.0",
+                "line_id": "AUM-002_9",
+                "status": "pending"
+            },
+            {
+                "CUSTOMER": "RANE- MM Nagar",
+                "PART NO": "11112900",
+                "A": "1000.0",
+                "B": "1000.0",
+                "C": "1000.0",
+                "line_id": "AUM-002_10",
+                "status": "pending"
+            }
+        ]
+    },
+    "queues": {},
+    "history": {}
+}
