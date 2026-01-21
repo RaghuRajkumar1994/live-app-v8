@@ -272,31 +272,5 @@
         "reason": "t4",
         "t1_apl_no": "N/A",
         "t2_apl_no": "N/A"
-    },
-    {
-        "start_time": "2026-01-10T19:24:00",
-        "end_time": "2026-01-10T19:25:00",
-        "total_hours": 0.016666666666666666,
-        "worker_name": "RA",
-        "shift": "B",
-        "machine_name": "AUM-002",
-        "fg_part_no": "101166",
-        "cable_id": "A04900395",
-        "reason": "testing 1",
-        "t1_apl_no": "APL-89",
-        "t2_apl_no": "APL--"
-    },
-    {
-        "start_time": "2026-01-14T13:50:00",
-        "end_time": "2026-01-14T13:51:00",
-        "total_hours": 0.016666666666666666,
-        "worker_name": "raghu",
-        "shift": "B",
-        "machine_name": "AUM-002",
-        "fg_part_no": "11114900",
-        "cable_id": "A04900422IN",
-        "reason": "testing 1",
-        "t1_apl_no": "APL-319",
-        "t2_apl_no": "APL-71"
     }
 ]

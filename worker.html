@@ -9,11 +9,13 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
         body { 
             font-family: 'Inter', sans-serif; 
+            padding: 20px; 
             background-color: #f4f7f9; 
             color: #333;
             /* min-height: 100vh; -- REMOVED to allow page to scroll */
         }
         .main-container {
+            max-width: 1600px; 
             margin: auto; 
             display: flex;
             flex-direction: column;
@@ -28,37 +30,18 @@
     align-items: center;
     width: 100%;
     border-bottom: 3px solid #3B82F6;
+    padding-bottom: 10px;
     margin-bottom: 15px;
-    /* Sticky Header */
-    position: sticky;
-    top: 0;
-    z-index: 40; /* Below floating buttons (z-50) and modals */
-    background-color: #f4f7f9; /* Match body background to hide content scrolling under */
-    padding: 10px 20px;
 }
 
 /* Updated h1 to remove the old border and centering logic */
 h1 { 
-    color: #172554; /* More Dark: Blue-950 */
-    background-color: #DBEAFE; /* Good Background: Blue-100 */
-    padding: 10px 30px;
-    border-radius: 12px;
+    color: #1F2937; 
     text-align: center; 
     margin: 0; 
-    font-size: 5rem; /* Big Title */
+    font-size: 3rem; 
     font-weight: 900;
-    text-transform: uppercase;
     grid-column: 2; /* Forces title to middle column */
-    letter-spacing: -0.02em;
-    text-shadow: 0 1px 0 rgba(0,0,0,0.06);
-}
-
-/* Responsive: scale down title on small screens */
-@media (max-width: 768px) {
-    h1 { font-size: 2rem; }
-}
-@media (min-width: 769px) and (max-width: 1200px) {
-    h1 { font-size: 3.5rem; }
 }
 
 .text-logo {
@@ -214,11 +197,6 @@ h1 {
             top: 0;
             z-index: 10;
         }
-        /* Offset sticky table header by the height of the main sticky header */
-        body > .header-container + .main-content-grid #plan-sheet-table th {
-            /* Approx. Header Height: 10px pad + 100px h1 + 10px pad + 3px border = ~123px */
-            top: 125px; 
-        }
         #plan-sheet-table tr.plan-completed {
             background-color: #ECFDF5; 
             color: #065F46; 
@@ -255,7 +233,6 @@ h1 {
         .plan-title {
             display: flex;
             align-items: center;
-            justify-content: center;
             gap: 8px;
             font-size: 1.1rem;
             font-weight: 600;
@@ -344,7 +321,6 @@ h1 {
             grid-template-columns: 1fr; 
             gap: 20px; 
             width: 100%;
-            padding: 0 20px 20px; /* Add horizontal and bottom padding */
             align-items: flex-start;
         }
         @media (min-width: 1200px) { 
@@ -435,11 +411,10 @@ h1 {
 
 .modal-content {
     background: white; width: 90%; max-width: 650px;
-    width: 100%; height: 100%;
-    padding: 25px;
+    padding: 25px; border-radius: 12px;
     box-shadow: 0 10px 25px rgba(0,0,0,0.2);
     animation: fadeIn 0.3s ease-in-out;
-    overflow-y: auto;
+    max-height: 90vh; overflow-y: auto;
 }
 
 @keyframes fadeIn { 
@@ -480,20 +455,15 @@ h1 {
                             <label for="machine-name-input">My Machine Name:</label>
                             <select id="machine-name-input" required class="uppercase">
                                 <option value="" disabled selected>Select Machine</option>
-                                <option value="AUM-001">AUM-001</option>
                                 <option value="AUM-002">AUM-002</option>
                                 <option value="AUM-003">AUM-003</option>
-                                <option value="AUM-005">AUM-005</option>
                                 <option value="AUM-009">AUM-009</option>
+                                <option value="AUM-001">AUM-001</option>
                                 <option value="AUM-010">AUM-010</option>
+                                <option value="AUM-005">AUM-005</option>
                                 <option value="AUM-011">AUM-011</option>
                                 <option value="AUM-012">AUM-012</option>
-                                <option value="AUM-013">AUM-013</option>
                             </select>
-                        </div>
-                        <div style="flex-grow: 1;">
-                            <label for="machine-password-input">Password:</label>
-                            <input type="password" id="machine-password-input" placeholder="(Optional)">
                         </div>
                         <div style="flex-grow: 1;"> 
                             <button onclick="joinMachineRoom()" id="join-room-button" class="w-full bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition duration-150 shadow-md">
@@ -575,11 +545,11 @@ h1 {
     <span class="history-label" style="display:none; white-space:nowrap; margin-left:6px; font-weight:800; font-size:0.95rem;">SHOW DATA HISTORY</span>
 </button>
 
-<div id="history-modal" class="modal-overlay" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; justify-content: center; align-items: center;">
-    <div class="modal-content" style="display: flex; flex-direction: column;">
-        <div class="flex justify-center items-center mb-4 border-b pb-3 relative">
+<div id="history-modal" class="modal-overlay" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; justify-content: center; align-items: center; padding: 10px;">
+    <div class="modal-content" style="background: white; width: 100%; max-width: 900px; padding: 25px; border-radius: 15px; height: 85vh; display: flex; flex-direction: column;">
+        <div class="flex justify-between items-center mb-4 border-b pb-3">
             <h2 class="text-2xl font-black text-gray-800">SUBMISSION HISTORY</h2>
-            <div class="flex items-center gap-2 absolute right-0">
+            <div class="flex items-center gap-2">
                 <button id="clear-history-button" title="Clear submission history (permanently)" onclick="clearSubmissionHistory()" class="bg-red-50 text-red-600 px-3 py-1 rounded text-sm hover:bg-red-100">Clear</button>
                 <button onclick="toggleHistoryModal()" class="text-gray-500 hover:text-red-500 text-3xl">&times;</button>
             </div>
@@ -601,6 +571,7 @@ h1 {
         </div>
     </div>
 </div>
+
                         <div class="input-row-8col">
                             <div>
                                 <label for="t1-crimp-height-measured">Crimp H (mm) Meas:</label>
@@ -816,12 +787,12 @@ h1 {
         </div>
         <p id="live-message-content" class="text-sm text-white font-medium"></p>
     </div>
-<div id="scrap-modal" class="modal-overlay" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; justify-content: center; align-items: center;">
-    <div class="modal-content" style="box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">
+<div id="scrap-modal" class="modal-overlay" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; justify-content: center; align-items: center; padding: 15px;">
+    <div class="modal-content" style="background: white; width: 100%; max-width: 550px; padding: 25px; border-radius: 15px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">
         
-        <div class="flex justify-center items-center mb-5 border-b pb-3 relative">
+        <div class="flex justify-between items-center mb-5 border-b pb-3">
             <h2 class="text-2xl font-black text-gray-800 tracking-tight">BOOK SCRAP</h2>
-            <div class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold absolute right-0">
+            <div class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold">
                 SN: <span id="scrap-serial-display">001</span>
             </div>
         </div>
@@ -844,13 +815,22 @@ h1 {
             </div>
             <div class="flex items-end">
                 <label class="flex items-center gap-2 cursor-pointer bg-amber-50 p-2 rounded border border-amber-200 w-full h-full">
-                    <input type="checkbox" id="scrap-use-sample" onchange="calculateScrapTotals()" class="w-5 h-5 accent-amber-600">
+                    <input type="checkbox" id="scrap-use-sample" onchange="toggleSampleScrap()" class="w-5 h-5 accent-amber-600">
                     <span class="text-xs font-black text-amber-800 uppercase">100mm Sample</span>
                 </label>
             </div>
         </div>
 
         <div class="space-y-4 bg-gray-50 p-4 rounded-xl border border-gray-200 mb-4">
+            <div>
+                <label class="text-xs font-bold text-gray-600 mb-2 block uppercase">Select Scrap Type</label>
+                <select id="scrap-component-type" onchange="calculateScrapTotals()" class="w-full border-2 border-gray-200 p-2 rounded-lg font-bold text-sm focus:border-indigo-500 outline-none">
+                    <option value="3">Cable & Terminals</option>
+                    <option value="1">Cable Only</option>
+                    <option value="2">Terminal Only</option>
+                </select>
+            </div>
+
             <div class="grid grid-cols-3 gap-3">
                 <div class="flex flex-col">
                     <span class="text-[10px] font-black text-gray-400 uppercase mb-1">Cable Qty</span>
@@ -904,11 +884,11 @@ h1 {
 </div>
 
 <!-- Plan History Modal -->
-<div id="plan-history-modal" class="modal-overlay" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; justify-content: center; align-items: center;">
-    <div class="modal-content">
-        <div class="flex justify-center items-center mb-4 relative">
+<div id="plan-history-modal" class="modal-overlay" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; justify-content: center; align-items: center; padding: 15px;">
+    <div class="modal-content" style="background: white; width: 100%; max-width: 900px; padding: 20px; border-radius: 12px;">
+        <div class="flex justify-between items-center mb-4">
             <h2 class="text-xl font-bold">Plan History</h2>
-            <button onclick="closePlanHistoryModal()" class="bg-gray-100 px-3 py-1 rounded absolute right-0">Close</button>
+            <button onclick="closePlanHistoryModal()" class="bg-gray-100 px-3 py-1 rounded">Close</button>
         </div>
         <div class="grid grid-cols-3 gap-4">
             <div style="border-right:1px solid #eee; padding-right:10px;">
@@ -924,11 +904,11 @@ h1 {
 </div>
 
 <!-- Queued Plans Preview Modal -->
-<div id="queued-modal" class="modal-overlay" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10000; justify-content: center; align-items: center;">
-    <div class="modal-content">
-        <div class="flex justify-center items-center mb-4 relative">
+<div id="queued-modal" class="modal-overlay" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10000; justify-content: center; align-items: center; padding: 15px;">
+    <div class="modal-content" style="background: white; width: 100%; max-width: 900px; padding: 20px; border-radius: 12px;">
+        <div class="flex justify-between items-center mb-4">
             <h2 class="text-xl font-bold">Queued Plans</h2>
-            <button onclick="closeQueuedModal()" class="bg-gray-100 px-3 py-1 rounded absolute right-0">Close</button>
+            <button onclick="closeQueuedModal()" class="bg-gray-100 px-3 py-1 rounded">Close</button>
         </div>
         <div class="grid grid-cols-3 gap-4">
             <div style="border-right:1px solid #eee; padding-right:10px;">
@@ -944,11 +924,11 @@ h1 {
 </div>
 
 <!-- Large In-Page Preview Modal -->
-<div id="large-preview-modal" class="modal-overlay" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10050; justify-content: center; align-items: center;">
-    <div class="modal-content" style="overflow: auto;">
-        <div class="flex justify-center items-center mb-4 relative">
+<div id="large-preview-modal" class="modal-overlay" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10050; justify-content: center; align-items: flex-start; padding-top: 20px;">
+    <div class="modal-content" style="background: white; width: 95%; max-width: 1200px; padding: 18px; border-radius: 10px; max-height: 90vh; overflow: auto;">
+        <div class="flex justify-between items-center mb-4">
             <h2 id="large-preview-title" class="text-xl font-bold">Plan Preview</h2>
-            <div class="absolute right-0">
+            <div>
                 <button onclick="printLargePreview()" class="bg-gray-100 px-3 py-1 rounded mr-2">Print</button>
                 <button onclick="closeLargePreview()" class="bg-gray-100 px-3 py-1 rounded">Close</button>
             </div>
@@ -1090,8 +1070,6 @@ h1 {
 
         function joinMachineRoom() {
             const machineName = machineNameInput.value.toUpperCase();
-            const password = document.getElementById('machine-password-input').value;
-
             if (!machineName) {
                 alert("Please select a Machine Name.");
                 return;
@@ -1099,11 +1077,10 @@ h1 {
             machineNameHidden.value = machineName;
             
             machineNameInput.disabled = true;
-            document.getElementById('machine-password-input').disabled = true;
             document.getElementById('join-room-button').disabled = true;
             roomStatus.textContent = `Connecting to room: ${machineName}...`;
             
-            socket.emit('join_machine_room', { machineName: machineName, password: password });
+            socket.emit('join_machine_room', { machineName: machineName });
         }
         
         // **MODIFIED: This function now performs a partial clear (used after submission)**
@@ -1386,8 +1363,10 @@ h1 {
                 // Pull Force Logic (Minimum strength required)
                 if (manualValue < measuredValue) {
                     validationType = 'invalid'; // Red: Less than minimum required
-                } else {
-                    validationType = 'exact'; // Green: Greater than or equal to minimum required
+                } else if (Math.abs(manualValue - measuredValue) < epsilon) {
+                    validationType = 'exact'; // Green: Exactly the minimum required
+                } else { // manualValue > measuredValue
+                    validationType = 'tolerable'; // Orange: Greater than minimum required (accepted but not exact)
                 }
             } else {
                 // Dimensional Measurements Logic (Tolerance +/-)
@@ -1951,7 +1930,6 @@ function renderHistory() {
                 roomStatus.textContent = `Error connecting: ${data.reason}`;
                 roomStatus.className = 'text-xs mt-1 font-bold text-red-700';
                 machineNameInput.disabled = false;
-                document.getElementById('machine-password-input').disabled = false;
                 document.getElementById('join-room-button').disabled = false;
             }
         });
@@ -2466,21 +2444,9 @@ function openScrapModal() {
 }
 
 function calculateScrapTotals() {
-    const isSample = document.getElementById('scrap-use-sample').checked;
-    const qtyInput = document.getElementById('scrap-qty');
-    let qty = parseFloat(qtyInput.value) || 0;
-
-    let unitLengthMm = 0;
-    if (isSample) {
-        unitLengthMm = 100; // 100mm
-        if (qtyInput.value === '') { qtyInput.value = 1; qty = 1; }
-    } else {
-        unitLengthMm = parseFloat(document.getElementById('produced-length').value) || 0;
-    }
-
-    document.getElementById('scrap-unit-length').value = unitLengthMm;
-    
-    const totalMeters = (unitLengthMm / 1000) * qty;
+    const unitLen = parseFloat(document.getElementById('scrap-unit-length').value) || 0;
+    const qty = parseFloat(document.getElementById('scrap-qty').value) || 0;
+    const totalMeters = (unitLen / 1000) * qty;
     document.getElementById('scrap-total-length-display').innerHTML = totalMeters.toFixed(3) + ' <span class="text-lg">Meters</span>';
 }
 
@@ -2492,7 +2458,7 @@ function submitScrap() {
     // FIX: Determine unit length based on the checkbox state
     // 0.1 meters = 100mm
     const unitLenFromForm = parseFloat(document.getElementById('produced-length').value) || 0;
-    const unitLengthMeters = isSample ? 0.1 : (unitLenFromForm / 1000);
+    const unitLength = isSample ? 0.1 : unitLenFromForm;
 
     // Read reason from select and handle 'Other' case with validation
     const reasonSelect = document.getElementById('scrap-reason');
@@ -2512,13 +2478,13 @@ function submitScrap() {
         machine: document.getElementById('machine-name-input') ? document.getElementById('machine-name-input').value : '',
         fg_part: document.getElementById('scrap-fg-part').value,
         cable_id: document.getElementById('scrap-cable-id').value,
-        component_type: "3",
+        component_type: document.getElementById('scrap-component-type').value,
         cable_qty: qty,
         t1_id: document.getElementById('label-scrap-t1-id').innerText.replace('T1: ', ''),
         t1_qty: parseInt(document.getElementById('scrap-t1-qty').value) || 0,
         t2_id: document.getElementById('label-scrap-t2-id').innerText.replace('T2: ', ''),
         t2_qty: parseInt(document.getElementById('scrap-t2-qty').value) || 0,
-        total_meters: (unitLengthMeters * qty).toFixed(3),
+        total_meters: (unitLength * qty).toFixed(3),
         reason: reason,
         batch: document.getElementById('scrap-picklist').value || '',
         timestamp: new Date().toLocaleString()
@@ -2626,6 +2592,36 @@ function clearSubmissionHistory() {
     showMessageBox('Submission history cleared.', 'success');
 }
 
+// Function to update the scrap length display
+function updateScrapLength() {
+    const qty = parseFloat(document.getElementById('scrap-qty').value) || 0;
+    const isSample = document.getElementById('scrap-use-sample').checked;
+    
+    let unitLength;
+    
+    if (isSample) {
+        // FORCE to 100mm (0.1 Meters) if the checkbox is ticked
+        unitLength = 0.1; 
+        // If user hasn't entered a qty, default to 1 for samples
+        if (qty === 0) document.getElementById('scrap-qty').value = 1;
+    } else {
+        // Use the current setting length from the main form
+        unitLength = parseFloat(document.getElementById('produced-length').value) || 0;
+    }
+    
+    const totalQty = parseFloat(document.getElementById('scrap-qty').value) || 0;
+    const totalLength = (unitLength * totalQty).toFixed(3);
+    
+    // Update the hidden input and the display text
+    document.getElementById('scrap-unit-length').value = unitLength;
+    document.getElementById('scrap-total-length-display').innerHTML = 
+        `${totalLength} <span class="text-lg">Meters</span>`;
+}
+
+// Add an event listener to the checkbox so it updates immediately when clicked
+// (use the single control 'scrap-use-sample')
+document.getElementById('scrap-use-sample').addEventListener('change', updateScrapLength);
+document.getElementById('scrap-qty').addEventListener('input', updateScrapLength);
     </script>
 </body>
 </html>

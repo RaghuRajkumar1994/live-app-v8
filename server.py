@@ -9,12 +9,6 @@ import csv
 import json
 import os
 from typing import List, Dict, Any
-import getpass
-import sys
-import signal
-import ctypes
-import time
-
 
 try:
     import openpyxl
@@ -26,68 +20,20 @@ except ImportError:
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024 
 app.config['SECRET_KEY'] = 'your_super_secure_secret_key' 
-app.config['SECRET_KEY'] = 'your_super_secure_secret_key'
-SERVER_PASSWORD = "admin" # WARNING: Hardcoded password. Not for production use.
 socketio = SocketIO(app, async_mode='eventlet')
 
-# --- Persistence Filenames ---
-PRODUCTION_FILE = 'production_log.json'
-STATE_FILE = 'machine_state.json'
-SCRAP_FILE = 'scrap_log.json'
-
-# --- Persistence Helper Functions ---
-def load_json_file(filename, default):
-    if os.path.exists(filename):
-        try:
-            with open(filename, 'r') as f:
-                return json.load(f)
-        except (json.JSONDecodeError, IOError):
-            print(f"Warning: {filename} corrupted. Using default.")
-    return default
-
-def save_json_file(filename, data):
-    try:
-        with open(filename, 'w') as f:
-            json.dump(data, f, indent=4)
-    except IOError as e:
-        print(f"Error saving {filename}: {e}")
-
-def load_production_log():
-    log = load_json_file(PRODUCTION_FILE, [])
-    for entry in log:
-        if 'datetime' in entry and isinstance(entry['datetime'], str):
-            try:
-                entry['datetime'] = datetime.fromisoformat(entry['datetime'])
-            except ValueError:
-                pass
-    return log
-
-def save_production_log(log):
-    serializable_log = []
-    for entry in log:
-        new_entry = entry.copy()
-        if 'datetime' in new_entry and isinstance(new_entry['datetime'], datetime):
-            new_entry['datetime'] = new_entry['datetime'].isoformat()
-        serializable_log.append(new_entry)
-    save_json_file(PRODUCTION_FILE, serializable_log)
-
-def load_machine_state():
-    state = load_json_file(STATE_FILE, {})
-    return state.get('plans', {}), state.get('queues', {}), state.get('history', {})
-
-def save_machine_state(plans, queues, history):
-    save_json_file(STATE_FILE, {'plans': plans, 'queues': queues, 'history': history})
-
-def load_scrap_log():
-    return load_json_file(SCRAP_FILE, [])
-
-def save_scrap_log(log):
-    save_json_file(SCRAP_FILE, log)
+# --- Machine Passwords Configuration ---
+MACHINE_PASSWORDS = {
+    "AUM-013": "1234"  # Example: AUM-013 requires password '1234'
+}
 
 # --- Data Storage (In-memory/File-based Persistence) ---
-SUBMISSION_LOG = load_production_log()
-MACHINE_PLANS, MACHINE_PLAN_QUEUES, MACHINE_PLAN_HISTORY = load_machine_state()
-SCRAP_LOG = load_scrap_log()
+SUBMISSION_LOG: List[Dict[str, Any]] = [] 
+MACHINE_PLANS: Dict[str, Any] = {} 
+# Per-machine queue for plans that are sent while an active plan is still pending
+MACHINE_PLAN_QUEUES: Dict[str, List[Any]] = {}
+# Per-machine archived plan history (list of {'archived_at': ISO, 'plan': [...]})
+MACHINE_PLAN_HISTORY: Dict[str, List[Dict[str, Any]]] = {}
 SID_TO_MACHINE: Dict[str, str] = {}
 
 # --- NEW: Stock Persistence Functions ---
@@ -343,7 +289,6 @@ def upload_plan():
         if has_active_pending:
             q = MACHINE_PLAN_QUEUES.setdefault(target_machine, [])
             q.append(plan_data_processed)
-            save_machine_state(MACHINE_PLANS, MACHINE_PLAN_QUEUES, MACHINE_PLAN_HISTORY)
             # Notify worker(s) in the machine room about queue size
             socketio.emit('queued_plan_count', {'count': len(q), 'machineName': target_machine}, room=target_machine)
             broadcast_data(datetime.now().strftime('%Y-%m-%d'))
@@ -351,7 +296,6 @@ def upload_plan():
         else:
             # No active pending plan - make this the current plan
             MACHINE_PLANS[target_machine] = plan_data_processed
-            save_machine_state(MACHINE_PLANS, MACHINE_PLAN_QUEUES, MACHINE_PLAN_HISTORY)
             socketio.emit('update_worker_plan', {'plan': plan_data_processed, 'machineName': target_machine}, room=target_machine)
             # Inform workers about the current queued size (could be zero)
             socketio.emit('queued_plan_count', {'count': len(MACHINE_PLAN_QUEUES.get(target_machine, [])), 'machineName': target_machine}, room=target_machine)
@@ -613,7 +557,6 @@ def handle_submit_output(data):
     try:
         data['datetime'] = datetime.strptime(f"{data['entry_date']} {data['entry_time']}", "%Y-%m-%d %H:%M") 
         SUBMISSION_LOG.append(data)
-        save_production_log(SUBMISSION_LOG)
         broadcast_data(data['datetime'].strftime('%Y-%m-%d')) 
         socketio.emit('submission_success', {'success': True}, room=request.sid)
 
@@ -672,6 +615,8 @@ def handle_submit_downtime(data):
         socketio.emit('downtime_submission_success', {'success': False, 'reason': f"Server error: {e}"}, room=request.sid)
 
     # --- NEW: SCRAP MATERIAL HANDLING ---
+SCRAP_LOG: List[Dict[str, Any]] = []  # In-memory storage for scrap records
+
 @socketio.on('submit_scrap_data')
 def handle_scrap_submission(data):
     socketio.emit('submit_scrap_data', data)
@@ -684,7 +629,6 @@ def handle_scrap_submission(data):
     
     # 2. Store in the server log (for persistence or later requests)
     SCRAP_LOG.append(data)
-    save_scrap_log(SCRAP_LOG)
     
     print(f"Scrap Received from {data.get('machine')}: {data.get('total_meters')} meters")
     
@@ -700,10 +644,17 @@ def handle_scrap_history_request():
 @socketio.on('join_machine_room')
 def handle_join_machine_room(data):
     machine_name = data.get('machineName')
+    password = data.get('password')
 
     if not machine_name:
         socketio.emit('join_confirm', {'success': False, 'reason': 'Missing machine name.'}, room=request.sid)
         return
+
+    # Check if machine requires password
+    if machine_name in MACHINE_PASSWORDS:
+        if MACHINE_PASSWORDS[machine_name] != password:
+            socketio.emit('join_confirm', {'success': False, 'reason': 'Invalid password for this machine.'}, room=request.sid)
+            return
 
     # Check if machine is already connected by another client
     for sid, name in SID_TO_MACHINE.items():
@@ -755,8 +706,6 @@ def handle_mark_plan_complete(data):
 
             MACHINE_PLANS[machine_name] = next_plan
             socketio.emit('update_worker_plan', {'plan': next_plan, 'machineName': machine_name}, room=machine_name)
-        
-        save_machine_state(MACHINE_PLANS, MACHINE_PLAN_QUEUES, MACHINE_PLAN_HISTORY)
 
         # Emit updated queue size to workers
         socketio.emit('queued_plan_count', {'count': len(queue), 'machineName': machine_name}, room=machine_name)
@@ -809,7 +758,6 @@ def handle_request_dequeue_plan(data):
         socketio.emit('plan_history_update', {'history': history, 'machineName': machine_name}, room=machine_name)
 
     MACHINE_PLANS[machine_name] = next_plan
-    save_machine_state(MACHINE_PLANS, MACHINE_PLAN_QUEUES, MACHINE_PLAN_HISTORY)
     # Broadcast the newly activated plan to the machine room
     socketio.emit('dequeued_plan', {'plan': next_plan, 'machineName': machine_name}, room=machine_name)
 
@@ -857,68 +805,9 @@ def handle_disconnect():
         print(f"Client {request.sid} disconnected from room: {machine_name}")
         broadcast_online_status()
 
-# --- NEW: Graceful Shutdown Handler ---
-def handle_shutdown_signal(sig, frame):
-    """Handles Ctrl+C, asks for a password, and shuts down gracefully."""
-    print("\n\n[SERVER] Shutdown request received (Ctrl+C).")
-    try:
-        password = getpass.getpass("[SERVER] Enter the server password to confirm shutdown: ")
-        if password == SERVER_PASSWORD:
-            print("[SERVER] Password correct. Shutting down gracefully...")
-            save_downtime_data(DOWNTIME_LOG)
-            save_production_log(SUBMISSION_LOG)
-            save_machine_state(MACHINE_PLANS, MACHINE_PLAN_QUEUES, MACHINE_PLAN_HISTORY)
-            save_scrap_log(SCRAP_LOG)
-            save_stock_data(INITIAL_CABLE_STOCK)
-            print("[SERVER] Downtime data saved.")
-            print("[SERVER] All production and plan data saved.")
-            sys.exit(0)
-        else:
-            print("[SERVER] Incorrect password. Shutdown aborted. Server continues to run.")
-    except (EOFError, KeyboardInterrupt):
-        print("\n[SERVER] Shutdown prompt cancelled. Server continues to run.")
-
-# --- NEW: Disable Console Close Button (Windows Only) ---
-def disable_close_button():
-    """Disables the 'X' close button on the Windows Console to force graceful shutdown via Ctrl+C."""
-    if os.name == 'nt':
-        try:
-            hwnd = ctypes.windll.kernel32.GetConsoleWindow()
-            if hwnd:
-                hmenu = ctypes.windll.user32.GetSystemMenu(hwnd, False)
-                # SC_CLOSE (0xF060) -> DeleteMenu (Removes the Close option entirely)
-                ctypes.windll.user32.DeleteMenu(hmenu, 0xF060, 0x00000000)
-                print("[SERVER] Console 'Close' (X) button disabled. Use Ctrl+C to stop server.")
-        except Exception as e:
-            print(f"[SERVER] Warning: Could not disable close button: {e}")
-
 # --- Start the Server ---
 if __name__ == '__main__':
-    # --- NEW: Startup Password Check ---
-    print("[SERVER] Starting server...")
-    try:
-        startup_password = getpass.getpass("[SERVER] Please enter the server password to start: ")
-        if startup_password != SERVER_PASSWORD:
-            print("[SERVER] Incorrect password. Server will not start.")
-            sys.exit(1)
-    except (EOFError, KeyboardInterrupt):
-        print("\n[SERVER] Startup cancelled.")
-        sys.exit(1)
-
-    print("[SERVER] Password accepted. Initializing server...")
-    signal.signal(signal.SIGINT, handle_shutdown_signal)
-    disable_close_button()
-
     print("Starting Flask-SocketIO Server...")
     print(f"Worker Input Page: http://0.0.0.0:5000/worker")
     print(f"Dashboard Page: http://0.0.0.0:5000/dashboard")
-    print("\nPress Ctrl+C to request shutdown.")
-
-    while True:
-        try:
-            eventlet.wsgi.server(eventlet.listen(('', 5000)), app)
-        except Exception as e:
-            print(f"\n[SERVER] CRASH DETECTED: {e}")
-            print("[SERVER] Restarting server in 3 seconds...")
-            time.sleep(3)
-            print("[SERVER] Restarting...")
+    eventlet.wsgi.server(eventlet.listen(('', 5000)), app)
