@@ -11,7 +11,13 @@
             font-family: 'Inter', sans-serif; 
             background-color: #f4f7f9; 
             color: #333;
+            /* FIX: Browsers cannot access local file paths. The image must be in the 'static' folder. */
+            background-image: url('/static/img.JPG');
             /* min-height: 100vh; -- REMOVED to allow page to scroll */
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
         }
         .main-container {
             margin: auto; 
@@ -39,26 +45,28 @@
 
 /* Updated h1 to remove the old border and centering logic */
 h1 { 
-    color: #172554; /* More Dark: Blue-950 */
-    background-color: #DBEAFE; /* Good Background: Blue-100 */
-    padding: 10px 30px;
-    border-radius: 12px;
     text-align: center; 
-    margin: 0; 
-    font-size: 5rem; /* Big Title */
+    margin: 10; 
+    font-size: 50px; /* Big Title */
     font-weight: 900;
     text-transform: uppercase;
     grid-column: 2; /* Forces title to middle column */
     letter-spacing: -0.02em;
     text-shadow: 0 1px 0 rgba(0,0,0,0.06);
+    color: #111827;
+    text-rendering: auto;
 }
 
 /* Responsive: scale down title on small screens */
 @media (max-width: 768px) {
     h1 { font-size: 2rem; }
+    h1 { font-size: 2.5rem; }
+    h1 { font-size: 1.5rem; }
 }
 @media (min-width: 769px) and (max-width: 1200px) {
     h1 { font-size: 3.5rem; }
+    h1 { font-size: 4.5rem; }
+    h1 { font-size: 2.25rem; }
 }
 
 .text-logo {
@@ -181,61 +189,86 @@ h1 {
         }
         
         #plan-sheet-container { 
-            border: 2px solid #3B82F6; 
-            border-radius: 8px; 
-            padding: 15px;
-            background-color: #EFF6FF;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
             display: flex; 
             flex-direction: column; 
-            overflow: hidden; 
-            /* flex-grow: 1; max-height: 100%; - REMOVED to allow content to dictate height */
+            padding: 0;
         }
+        
+        @media (min-width: 1200px) {
+            #plan-sheet-container {
+                height: calc(100vh - 160px);
+                position: sticky;
+                top: 140px;
+            }
+        }
+
         #plan-data-view {
-            /* flex-grow: 1; overflow-y: auto; - REMOVED to allow content to grow without internal scrollbar */
-            margin-top: 10px;
+            flex-grow: 1;
+            overflow-y: auto;
+            overflow-x: auto;
+            background-color: white;
         }
 
         #plan-sheet-table {
             width: 100%;
-            border-collapse: collapse;
-            font-size: 0.85rem;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 0.8rem;
+            font-family: 'Inter', sans-serif;
         }
-        #plan-sheet-table th, #plan-sheet-table td {
-            padding: 8px 6px;
-            text-align: left;
-            border-bottom: 1px solid #E5E7EB;
-            white-space: nowrap; 
-        }
+        
         #plan-sheet-table th {
-            background-color: #DBEAFE; 
-            color: #1E40AF; 
+            background-color: #1e293b;
+            color: #f8fafc;
             font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 14px 16px;
+            text-align: left;
             position: sticky;
             top: 0;
-            z-index: 10;
+            z-index: 20;
+            border-bottom: 2px solid #334155;
+            white-space: nowrap;
         }
-        /* Offset sticky table header by the height of the main sticky header */
-        body > .header-container + .main-content-grid #plan-sheet-table th {
-            /* Approx. Header Height: 10px pad + 100px h1 + 10px pad + 3px border = ~123px */
-            top: 125px; 
+        
+        #plan-sheet-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f1f5f9;
+            color: #334155;
+            vertical-align: middle;
+            white-space: nowrap;
         }
+        
+        #plan-sheet-table tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+        
+        #plan-sheet-table tr:hover {
+            background-color: #f1f5f9;
+        }
+        
         #plan-sheet-table tr.plan-completed {
-            background-color: #ECFDF5; 
-            color: #065F46; 
-            opacity: 0.7;
+            background-color: #f0fdf4 !important;
         }
         .plan-completed td {
-            text-decoration: line-through;
+            color: #166534;
+            font-weight: 500;
         }
 
         .complete-button {
-            padding: 6px 12px;
-            font-weight: 600;
-            border-radius: 4px;
+            width: 100%;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 700;
             transition: all 0.2s;
-            font-size: 0.8rem;
-            cursor: pointer;
-            min-width: 100px; 
         }
 
         .complete-button-pending {
@@ -253,15 +286,18 @@ h1 {
             cursor: default;
         }
         .plan-title {
+            padding: 16px 20px;
+            background-color: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
             display: flex;
             align-items: center;
-            justify-content: center;
+            justify-content: space-between;
             gap: 8px;
             font-size: 1.1rem;
-            font-weight: 600;
-            color: #1D4ED8; 
-            padding-bottom: 8px;
-            border-bottom: 2px solid #BFDBFE; 
+            font-weight: 700;
+            color: #0f172a;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            z-index: 25;
         }
         /* Highlight for selected archived history entry and queued list selection */
         #plan-history-list .selected-entry,
@@ -345,7 +381,7 @@ h1 {
             gap: 20px; 
             width: 100%;
             padding: 0 20px 20px; /* Add horizontal and bottom padding */
-            align-items: flex-start;
+            align-items: stretch;
         }
         @media (min-width: 1200px) { 
             .main-content-grid {
@@ -362,6 +398,12 @@ h1 {
         #join-room-button {
              padding-top: 8px;
              padding-bottom: 8px;
+             height: 42px;
+        }
+        #machine-name-input {
+             margin-bottom: 0;
+             height: 42px;
+             border-radius: 0.5rem;
         }
         .submission-card {
             padding-top: 15px;
@@ -455,6 +497,15 @@ h1 {
 }
 .scrap-btn:hover { background-color: #6D28D9; 
 }
+
+        /* NEW: 3D Animation for Menu Button */
+        .menu-btn-3d {
+            transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            transform-style: preserve-3d;
+        }
+        .menu-btn-3d:hover {
+            transform: rotateY(180deg);
+        }
     </style>
 </head>
 <body>
@@ -473,12 +524,37 @@ h1 {
             
             <div class="data-entry-container">
                 
-                <div id="connection-card" class="card bg-indigo-50 border border-indigo-200">
+                <div id="connection-card" class="card bg-indigo-50 border border-indigo-200 relative">
+                    <!-- NEW: Analog Style Stats Layer -->
+                    <div class="absolute top-2 right-2 flex gap-2 z-10">
+                        <div class="bg-green-100 border-2 border-green-300 rounded-lg p-2 text-center shadow-lg" style="width: 110px;">
+                            <div id="stats-today-qty" class="text-2xl font-black text-green-800">0</div>
+                            <div class="text-[10px] font-bold text-green-900 uppercase tracking-wider">Prod Qty</div>
+                            <div class="mt-1 flex items-center justify-center gap-1">
+                                <select id="qty-check-hours" class="w-auto p-0 border border-gray-400 rounded text-xs" style="height: 20px;" onchange="checkQtyLastHours()">
+                                    <option value="" disabled selected>Hrs</option>
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                    <option value="6">6</option>
+                                    <option value="7">7</option>
+                                    <option value="8">8</option>
+                                </select>
+                                <span id="qty-check-result" class="font-bold text-blue-600 text-sm" style="display: none;"></span>
+                            </div>
+                        </div>
+                        <div class="bg-red-100 border-2 border-red-300 rounded-lg p-2 text-center shadow-lg" style="width: 110px;">
+                            <div id="stats-today-downtime" class="text-2xl font-black text-red-800">0.00</div>
+                            <div class="text-[10px] font-bold text-red-900 uppercase tracking-wider">Downtime Hrs</div>
+                        </div>
+                    </div>
                     <h2 class="text-lg font-semibold text-gray-700 mb-3">Connection Status</h2>
                     <div class="input-row items-end">
                         <div style="flex-grow: 2;">
                             <label for="machine-name-input">My Machine Name:</label>
-                            <select id="machine-name-input" required class="uppercase">
+                            <select id="machine-name-input" required class="uppercase" onchange="resetStatsDisplay()">
                                 <option value="" disabled selected>Select Machine</option>
                                 <option value="AUM-001">AUM-001</option>
                                 <option value="AUM-002">AUM-002</option>
@@ -492,11 +568,7 @@ h1 {
                             </select>
                         </div>
                         <div style="flex-grow: 1;">
-                            <label for="machine-password-input">Password:</label>
-                            <input type="password" id="machine-password-input" placeholder="(Optional)">
-                        </div>
-                        <div style="flex-grow: 1;"> 
-                            <button onclick="joinMachineRoom()" id="join-room-button" class="w-full bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition duration-150 shadow-md">
+                            <button onclick="joinMachineRoom()" id="join-room-button" class="w-full bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-all duration-200 shadow-md transform hover:scale-105 hover:shadow-xl">
                                 Connect
                             </button>
                         </div>
@@ -531,7 +603,7 @@ h1 {
                     <div class="input-row">
                         <div>
                             <label for="shift">Shift:</label>
-                            <select id="shift" required>
+                            <select id="shift" required onchange="updateStatsDisplay()">
                                 <option value="" disabled selected>Select Shift</option>
                                 <option value="A">Shift A</option>
                                 <option value="B">Shift B</option>
@@ -777,7 +849,8 @@ h1 {
                     </div>
                     
                     <div class="btn-group">
-                        <button id="start-downtime-button" onclick="startDowntime()">Start Downtime</button>
+                        <button id="start-downtime-button" onclick="startDowntime('Breakdown')">Start Downtime</button>
+                        <button id="start-setting-button" onclick="startDowntime('Setting')" class="bg-sky-600 hover:bg-sky-700 text-white">Start Setting Down</button>
                         <button id="end-downtime-button" onclick="endDowntime()" style="display: none;">End Downtime</button> 
                         <button id="submit-downtime-button" onclick="submitDowntime()" style="display: none;">Submit Downtime</button> 
                     </div>
@@ -785,16 +858,46 @@ h1 {
                 </div>
                 </div> 
             
-            <div id="plan-sheet-container" class="card">
+            <div id="plan-sheet-container">
                 <div class="plan-title">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-                    <span class="text-lg">Active Plan Sheet:</span>
-                    <span id="current-plan-machine" class="text-base font-normal">N/A</span>
-                    <div style="margin-left:auto; display:flex; align-items:center; gap:8px;">
-                        <div id="next-plan-badge" style="background:#EEF2FF;color:#3730A3;padding:6px 10px;border-radius:9999px;font-weight:800;font-size:0.85rem;display:inline-flex;align-items:center;gap:6px;">Queued: <span id="next-plan-count">0</span></div>
-                        <button id="view-next-plan-button" onclick="viewNextPlan()" class="bg-indigo-600 text-white px-3 py-1 rounded text-sm opacity-50 cursor-not-allowed" disabled>View Next Plan</button>
-                        <button id="view-queued-button" onclick="openQueuedModal()" class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded text-sm">Queued</button>
-                        <button id="view-history-button" onclick="openPlanHistoryModal()" class="bg-gray-200 text-gray-800 px-3 py-1 rounded text-sm">History</button>
+                    <div class="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 text-indigo-600"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                        <span class="text-lg font-bold text-gray-800 whitespace-nowrap">Active Plan Sheet:</span>
+                        <span id="current-plan-machine" class="text-lg font-medium text-indigo-600">N/A</span>
+                    </div>
+                    <div class="relative mx-2 flex-grow max-w-sm hidden lg:block">
+                        <!-- The search input, hidden initially. Note the pl-10 for the icon space. -->
+                        <input type="text" id="plan-search-input" 
+                               onkeyup="filterPlanSheet()" 
+                               onblur="hidePlanSearch()"
+                               placeholder="Search Part No or Cable ID..." 
+                               class="block w-full pl-10 pr-3 py-1.5 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm opacity-0 pointer-events-none transition-opacity duration-200">
+                        
+                        <!-- This div holds the search icon that is clickable. It's positioned on the left. -->
+                        <div id="plan-search-trigger" class="absolute inset-y-0 left-0 pl-3 flex items-center transition-opacity duration-200">
+                            <svg onclick="showPlanSearch()" class="h-5 w-5 text-gray-500 cursor-pointer hover:text-gray-800" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="openPlanHistoryModal()" class="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-md text-sm font-bold hover:bg-indigo-100 transition flex items-center gap-1 border border-indigo-200">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            Prev Plans
+                        </button>
+                        <div class="relative inline-block text-left">
+                            <button id="plan-menu-button" onclick="togglePlanMenu()" title="More Options" class="bg-gray-200 text-gray-800 p-2 rounded-full hover:bg-gray-300 focus:outline-none menu-btn-3d">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                            </button>
+                            <div id="plan-menu-dropdown" class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none hidden z-30 p-2 space-y-2">
+                                <div id="next-plan-badge" style="background:#EEF2FF;color:#3730A3;padding:6px 10px;border-radius:9999px;font-weight:800;font-size:0.85rem;display:inline-flex;align-items:center;gap:6px;">Queued: <span id="next-plan-count">0</span></div>
+                                <button id="view-next-plan-button" onclick="viewNextPlan()" class="w-full text-left bg-indigo-600 text-white px-3 py-2 rounded text-sm opacity-50 cursor-not-allowed" disabled>View Next Plan</button>
+                                <button id="view-queued-button" onclick="openQueuedModal()" class="w-full text-left bg-yellow-100 text-yellow-800 px-3 py-2 rounded text-sm hover:bg-yellow-200">Queued</button>
+                                <button id="view-history-button" onclick="openPlanHistoryModal()" class="w-full text-left bg-gray-200 text-gray-800 px-3 py-2 rounded text-sm hover:bg-gray-300">History</button>
+                                <button id="refresh-plan-button" onclick="refreshActivePlan()" title="Manually refresh the active plan from the server" class="w-full text-left bg-sky-100 text-sky-800 px-3 py-2 rounded text-sm hover:bg-sky-200 border border-sky-200 font-semibold">Refresh</button>
+                            </div>
+                        </div>
+                        <button id="clear-plan-button" onclick="clearActivePlan()" class="bg-red-100 text-red-800 px-3 py-1 rounded text-sm hover:bg-red-200 border border-red-200 font-semibold">Clear</button>
                     </div>
                 </div>
                 <div id="plan-data-view">
@@ -903,6 +1006,24 @@ h1 {
     </div>
 </div>
 
+<!-- Plan Detail Modal -->
+<div id="plan-detail-modal" class="modal-overlay" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10060; justify-content: center; align-items: center;">
+    <div class="modal-content" style="max-width: 500px; width: 90%; max-height: 85vh; overflow-y: auto; border-radius: 12px; padding: 0;">
+        <div class="bg-gray-100 px-6 py-4 border-b border-gray-200 flex justify-between items-center sticky top-0">
+            <h2 class="text-lg font-bold text-gray-800">Plan Line Details</h2>
+            <button onclick="closePlanDetailModal()" class="text-gray-500 hover:text-gray-700 focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+        <div id="plan-detail-content" class="p-6 space-y-4">
+            <!-- Details injected here -->
+        </div>
+        <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end sticky bottom-0">
+            <button onclick="closePlanDetailModal()" class="bg-white border border-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors shadow-sm">Close</button>
+        </div>
+    </div>
+</div>
+
 <!-- Plan History Modal -->
 <div id="plan-history-modal" class="modal-overlay" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; justify-content: center; align-items: center;">
     <div class="modal-content">
@@ -982,6 +1103,7 @@ h1 {
         
         // GLOBAL LOOKUP TABLE for Excel Data
         let measuredDataLookup = [];
+        let qtyCheckTimeout;
         // ... (Existing code ends around line 543 before setInitialDateTime())
     
     /** Helper function to get the current date and time formatted for a datetime-local input (YYYY-MM-DDTHH:MM). */
@@ -1090,7 +1212,6 @@ h1 {
 
         function joinMachineRoom() {
             const machineName = machineNameInput.value.toUpperCase();
-            const password = document.getElementById('machine-password-input').value;
 
             if (!machineName) {
                 alert("Please select a Machine Name.");
@@ -1099,11 +1220,10 @@ h1 {
             machineNameHidden.value = machineName;
             
             machineNameInput.disabled = true;
-            document.getElementById('machine-password-input').disabled = true;
             document.getElementById('join-room-button').disabled = true;
             roomStatus.textContent = `Connecting to room: ${machineName}...`;
             
-            socket.emit('join_machine_room', { machineName: machineName, password: password });
+            socket.emit('join_machine_room', { machineName: machineName });
         }
         
         // **MODIFIED: This function now performs a partial clear (used after submission)**
@@ -1162,6 +1282,14 @@ h1 {
 
         function markPlanLineComplete(lineId) {
             socket.emit('mark_plan_complete', { lineId: lineId, machineName: machineNameHidden.value });
+        }
+
+        function markPlanShiftComplete(lineId, shift) {
+            socket.emit('mark_plan_complete', { 
+                lineId: lineId, 
+                machineName: machineNameHidden.value,
+                shift: shift 
+            });
         }
         
         // --- UPDATED Autofill Function ---
@@ -1609,12 +1737,14 @@ h1 {
         }
         
         /** Starts the downtime sequence. */
-        function startDowntime() {
+        function startDowntime(reason = '') {
             if (!machineNameHidden.value) {
                 showMessageBox('Please connect to a machine room first.', 'error');
                 return;
             }
             if (isDowntimeActive) return;
+
+            const isSetting = reason === 'Setting';
 
             isDowntimeActive = true;
             downtimeStartTime = new Date();
@@ -1626,17 +1756,28 @@ h1 {
             downtimeEndInput.value = nowLocal; 
             downtimeEndInput.disabled = false;
             downtimeReasonInput.disabled = false;
+            if (reason) {
+                downtimeReasonInput.value = reason;
+            }
             downtimeTotalTimeInput.value = '0.00'; 
             downtimeReasonInput.focus();
 
             // Toggle UI state
             startDowntimeButton.style.display = 'none';
+            document.getElementById('start-setting-button').style.display = 'none';
             endDowntimeButton.style.display = 'block';
             submitDowntimeButton.style.display = 'none';
             downtimeCard.classList.add('downtime-active-state');
             downtimeStatusMessage.textContent = 'Downtime Active. Production is locked.';
             
             toggleProductionLock(true);
+            
+            // Report status to dashboard
+            socket.emit('report_machine_status', { 
+                machineName: machineNameHidden.value, 
+                status: 'DOWNTIME',
+                reason: reason || 'Downtime Started' 
+            });
             
             showMessageBox('Downtime started. Fill in reason and end time when finished.', 'info');
         }
@@ -1711,6 +1852,8 @@ function endDowntime() {
     // **FIX: ADD FG Part Number and Cable ID data**
     fg_part_no: document.getElementById('fg-part-no').value || 'N/A',
     cable_id: document.getElementById('cable-id').value || 'N/A',
+    t1_terminal_id: document.getElementById('t1-terminal-id').value || 'N/A',
+    t2_terminal_id: document.getElementById('t2-terminal-id').value || 'N/A',
     
     // Include Terminal APL NOs as requested
     t1_apl_no: document.getElementById('t1-apl-no').value || 'N/A',
@@ -1817,11 +1960,19 @@ function renderHistory() {
 
             // 3. Toggle UI state back to start mode
             startDowntimeButton.style.display = 'block';
+            document.getElementById('start-setting-button').style.display = 'block';
             submitDowntimeButton.style.display = 'none';
             downtimeCard.classList.remove('downtime-active-state');
             downtimeStatusMessage.textContent = 'Downtime submitted. Ready for next entry.';
             
             toggleProductionLock(false); // Unlock production submission
+            
+            // Report status back to running
+            socket.emit('report_machine_status', { 
+                machineName: machineNameHidden.value, 
+                status: 'RUNNING',
+                reason: ''
+            });
         }
         // --- END NEW Downtime Logic ---
 
@@ -1951,7 +2102,6 @@ function renderHistory() {
                 roomStatus.textContent = `Error connecting: ${data.reason}`;
                 roomStatus.className = 'text-xs mt-1 font-bold text-red-700';
                 machineNameInput.disabled = false;
-                document.getElementById('machine-password-input').disabled = false;
                 document.getElementById('join-room-button').disabled = false;
             }
         });
@@ -1985,6 +2135,10 @@ function renderHistory() {
             showMessageBox(`No queued plans available.`, 'warning');
         });
 
+        socket.on('plan_cleared', (data) => {
+            showMessageBox(data.message, 'success');
+        });
+
         // Server pushed history update
         socket.on('plan_history_update', (data) => {
             if (data.machineName !== machineNameHidden.value) return;
@@ -2015,6 +2169,68 @@ function renderHistory() {
             showMessageBox(data.message, 'info');
         });
 
+        // --- NEW: Check Qty Last N Hours ---
+        function checkQtyLastHours() {
+            const machineName = machineNameHidden.value;
+            const hours = document.getElementById('qty-check-hours').value;
+            
+            if (!machineName) {
+                showMessageBox('Please connect to a machine first.', 'error');
+                document.getElementById('qty-check-hours').value = "";
+                return;
+            }
+            
+            socket.emit('check_qty_last_hours', { machineName: machineName, hours: hours });
+        }
+
+        socket.on('qty_last_hours_result', (data) => {
+            const resultSpan = document.getElementById('qty-check-result');
+            const hoursDropdown = document.getElementById('qty-check-hours');
+
+            if (resultSpan && hoursDropdown) {
+                // Clear any existing timeout to prevent it from hiding the new result
+                if (qtyCheckTimeout) {
+                    clearTimeout(qtyCheckTimeout);
+                }
+
+                resultSpan.textContent = data.totalQty;
+                resultSpan.style.display = 'inline-block';
+
+                // Set a new timeout to hide the result and reset the dropdown
+                qtyCheckTimeout = setTimeout(() => {
+                    resultSpan.style.display = 'none';
+                    resultSpan.textContent = '';
+                    hoursDropdown.value = ""; // Reset dropdown to the "Hrs" placeholder
+                }, 10000); // 10 seconds
+            }
+        });
+        
+        let currentMachineStats = {}; // Store the latest stats from server
+
+        socket.on('update_machine_stats', (data) => {
+            currentMachineStats = data;
+            updateStatsDisplay();
+        });
+
+        function updateStatsDisplay() {
+            const shiftInput = document.getElementById('shift');
+            const selectedShift = shiftInput.value || 'A'; // Default to A if nothing selected
+            
+            // Get stats for the selected shift, or default to 0
+            const stats = (currentMachineStats && currentMachineStats[selectedShift]) ? currentMachineStats[selectedShift] : {qty: 0, downtime: 0};
+
+            const qtyEl = document.getElementById('stats-today-qty');
+            const dtEl = document.getElementById('stats-today-downtime');
+            
+            if (qtyEl) qtyEl.textContent = stats.qty;
+            if (dtEl) dtEl.textContent = stats.downtime.toFixed(2);
+        }
+
+        function resetStatsDisplay() {
+            currentMachineStats = {};
+            updateStatsDisplay();
+        }
+
         function displayPlanSheet(plan, machineName) {
             currentPlan = Array.isArray(plan) ? plan : [];
             currentPlanMachine.textContent = machineName;
@@ -2028,7 +2244,7 @@ function renderHistory() {
             let tableHTML = '<table id="plan-sheet-table"><thead><tr>';
             
             const headers = Object.keys(currentPlan[0]);
-            const displayHeaders = headers.filter(h => h !== 'line_id');
+            const displayHeaders = headers.filter(h => h !== 'line_id' && !h.startsWith('status_'));
 
             displayHeaders.forEach(header => {
                 const shortHeader = header.toUpperCase().replace(/_/g, ' ').replace('IDENTIFICATION', 'ID').replace('NUMBER', 'NO');
@@ -2037,16 +2253,39 @@ function renderHistory() {
             tableHTML += '<th>ACTION</th>'; 
             tableHTML += '</tr></thead><tbody>';
 
-            currentPlan.forEach(row => {
+            currentPlan.forEach((row, index) => {
                 const isCompleted = row.status === 'completed';
                 const rowClass = isCompleted ? 'plan-completed' : '';
                 
-                tableHTML += `<tr class="${rowClass}">`;
+                tableHTML += `<tr class="${rowClass} hover:bg-blue-50 cursor-pointer transition-colors" onclick="openPlanDetailModal(${index})">`;
                 
                 displayHeaders.forEach(header => {
+                    const upperHeader = header.toUpperCase();
                     if (header === 'status') {
-                        const statusText = isCompleted ? '✅ DONE' : '🕒 PENDING';
+                        const statusText = isCompleted ? '✅ COMPLETED' : '🕒 PENDING';
                          tableHTML += `<td>${statusText}</td>`;
+                    } else if (['A', 'B', 'C'].includes(upperHeader)) {
+                        // Special handling for Shift columns with Tick Button
+                        const val = row[header] || '';
+                        // Check if there is a specific status for this shift in the row data (if backend supports it)
+                        const shiftStatusKey = `status_${header.toLowerCase()}`;
+                        const isShiftDone = row[shiftStatusKey] === 'completed';
+                        
+                        let cellContent = `<div class="flex flex-col items-center gap-1">`;
+                        cellContent += `<span class="font-bold text-gray-700">${val}</span>`;
+                        
+                        if (val !== '' && val != 0) { 
+                            const btnClass = isShiftDone 
+                                ? "bg-green-500 border-green-600 text-white hover:bg-green-600" 
+                                : "bg-white border-gray-300 text-gray-200 hover:border-indigo-400 hover:text-indigo-300";
+                            const title = isShiftDone ? "Mark Pending" : "Mark Done";
+
+                            cellContent += `<button onclick="event.stopPropagation(); markPlanShiftComplete('${row.line_id}', '${upperHeader}')" class="transition-all border rounded-md w-6 h-6 flex items-center justify-center shadow-sm ${btnClass}" title="${title}">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                </button>`;
+                        }
+                        cellContent += `</div>`;
+                        tableHTML += `<td class="text-center align-middle">${cellContent}</td>`;
                     } else {
                         tableHTML += `<td>${row[header] || ''}</td>`;
                     }
@@ -2054,7 +2293,7 @@ function renderHistory() {
                 
                 const buttonText = isCompleted ? 'Completed' : 'Mark Done';
                 const buttonClass = isCompleted ? 'complete-button-completed' : 'complete-button-pending';
-                const buttonAction = isCompleted ? '' : `onclick="markPlanLineComplete('${row.line_id}')"`;
+                const buttonAction = isCompleted ? '' : `onclick="event.stopPropagation(); markPlanLineComplete('${row.line_id}')"`;
                 
                 tableHTML += `<td><button class="complete-button ${buttonClass}" ${buttonAction} ${isCompleted ? 'disabled' : ''}>${buttonText}</button></td>`;
                 tableHTML += '</tr>';
@@ -2062,9 +2301,101 @@ function renderHistory() {
 
             tableHTML += '</tbody></table>';
             planDataView.innerHTML = tableHTML;
+            
+            // Re-apply filter if user was searching
+            filterPlanSheet();
 
             // Update the 'View Next Plan' button visibility (server provides the count)
             updateViewNextButton();
+        }
+
+        function showPlanSearch() {
+            const trigger = document.getElementById('plan-search-trigger');
+            const input = document.getElementById('plan-search-input');
+
+            if (trigger && input) {
+                trigger.classList.add('opacity-0', 'pointer-events-none');
+                input.classList.remove('opacity-0', 'pointer-events-none');
+                setTimeout(() => input.focus(), 50);
+            }
+        }
+
+        function hidePlanSearch() {
+            const trigger = document.getElementById('plan-search-trigger');
+            const input = document.getElementById('plan-search-input');
+
+            if (trigger && input) {
+                // Only hide if the input is empty
+                if (input.value.trim() === '') {
+                    trigger.classList.remove('opacity-0', 'pointer-events-none');
+                    input.classList.add('opacity-0', 'pointer-events-none');
+                }
+            }
+        }
+
+        function filterPlanSheet() {
+            const input = document.getElementById('plan-search-input');
+            if (!input) return;
+            
+            const filter = input.value.toUpperCase();
+            const table = document.getElementById('plan-sheet-table');
+            if (!table) return;
+            
+            const tbody = table.getElementsByTagName('tbody')[0];
+            if (!tbody) return;
+            
+            const tr = tbody.getElementsByTagName('tr');
+            
+            for (let i = 0; i < tr.length; i++) {
+                const row = tr[i];
+                if (row) {
+                    const txtValue = row.textContent || row.innerText;
+                    if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                        row.style.display = "";
+                    } else {
+                        row.style.display = "none";
+                    }
+                }
+            }
+        }
+
+        function openPlanDetailModal(index) {
+            const rowData = currentPlan[index];
+            if (!rowData) return;
+
+            const content = document.getElementById('plan-detail-content');
+            let html = '<div class="grid grid-cols-1 gap-y-3">';
+            
+            const keys = Object.keys(rowData).filter(k => k !== 'line_id');
+            
+            keys.forEach(key => {
+                const label = key.replace(/_/g, ' ').toUpperCase();
+                let value = rowData[key];
+                
+                if (key === 'status') {
+                    const colorClass = value === 'completed' ? 'text-green-700 bg-green-100' : 'text-blue-700 bg-blue-100';
+                    value = `<span class="px-2 py-0.5 rounded text-xs font-bold uppercase ${colorClass}">${value}</span>`;
+                } else if (value === null || value === undefined || value === '') {
+                    value = '<span class="text-gray-400 italic">N/A</span>';
+                }
+
+                html += `
+                    <div class="flex flex-col border-b border-gray-100 last:border-0 pb-2 last:pb-0">
+                        <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">${label}</span>
+                        <span class="text-sm font-medium text-gray-900 break-words">${value}</span>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            content.innerHTML = html;
+            
+            const modal = document.getElementById('plan-detail-modal');
+            modal.style.display = 'flex';
+        }
+
+        function closePlanDetailModal() {
+            document.getElementById('plan-detail-modal').style.display = 'none';
         }
 
         // --- Plan Queue Helper Functions ---
@@ -2151,6 +2482,36 @@ function renderHistory() {
             viewArchivedPlan(planHistory.length - 1);
         }
 
+        function renderPlanTable(plan, machineName) {
+            if (!Array.isArray(plan) || plan.length === 0) return '<div class="p-4 text-gray-500 italic">No data available.</div>';
+            
+            let html = '<table class="w-full text-xs border-collapse"><thead><tr class="bg-gray-100 border-b">';
+            // Get headers from first row, excluding line_id and internal status keys
+            const headers = Object.keys(plan[0]).filter(k => k !== 'line_id' && !k.startsWith('status_'));
+            
+            headers.forEach(h => {
+                html += `<th class="p-2 text-left font-semibold text-gray-600 uppercase">${h.replace(/_/g, ' ')}</th>`;
+            });
+            html += '<th class="p-2 text-left font-semibold text-gray-600 uppercase">STATUS</th></tr></thead><tbody>';
+            
+            plan.forEach(row => {
+                html += '<tr class="border-b hover:bg-gray-50">';
+                headers.forEach(h => {
+                    html += `<td class="p-2 text-gray-700">${row[h] || ''}</td>`;
+                });
+                const status = row.status === 'completed' ? '<span class="text-green-600 font-bold">DONE</span>' : '<span class="text-blue-600 font-bold">PENDING</span>';
+                html += `<td class="p-2">${status}</td></tr>`;
+            });
+            html += '</tbody></table>';
+            return html;
+        }
+
+        function deleteArchivedPlan(index) {
+            if (!confirm("Are you sure you want to delete this archived plan?")) return;
+            socket.emit('delete_plan_history_entry', { machineName: machineNameHidden.value, index: index });
+            backToActivePlan();
+        }
+
         function viewArchivedPlan(index) {
             const entry = planHistory[index];
             if (!entry) return;
@@ -2166,7 +2527,7 @@ function renderHistory() {
             const title = document.getElementById('archived-detail-title');
             const detail = document.getElementById('archived-detail-view');
             const date = entry.archived_at ? new Date(entry.archived_at).toLocaleString() : 'Unknown';
-            title.innerHTML = `Archived Plan — ${date} <button type="button" id="open-large-arch-btn" onclick="openLargePreview()" class="ml-3 bg-gray-100 px-2 py-1 rounded text-sm">Open Large</button> <button type="button" id="back-to-active-btn" class="ml-3 bg-gray-100 px-2 py-1 rounded text-sm">Back to Active</button>`;
+            title.innerHTML = `Archived Plan — ${date} <button type="button" id="open-large-arch-btn" onclick="openLargePreview()" class="ml-3 bg-gray-100 px-2 py-1 rounded text-sm">Open Large</button> <button type="button" id="back-to-active-btn" class="ml-3 bg-gray-100 px-2 py-1 rounded text-sm">Back to Active</button> <button type="button" onclick="deleteArchivedPlan(${index})" class="ml-3 bg-red-100 text-red-700 px-2 py-1 rounded text-sm hover:bg-red-200 border border-red-200 font-bold">Clear</button>`;
 
             // Add event handler for 'Open Large' to preview full-size
             const openLargeBtn = document.getElementById('open-large-arch-btn');
@@ -2199,11 +2560,61 @@ function renderHistory() {
             if (prevSelected) prevSelected.classList.remove('selected-entry');
         }
 
+        function togglePlanMenu(show) {
+            const menu = document.getElementById('plan-menu-dropdown');
+            const btn = document.getElementById('plan-menu-button');
+            if (!menu) return;
+
+            if (show === undefined) {
+                show = menu.classList.contains('hidden');
+            }
+
+            if (show) {
+                menu.classList.remove('hidden');
+                if (btn) {
+                    btn.classList.add('bg-indigo-100', 'text-indigo-700');
+                    btn.classList.remove('bg-gray-200', 'text-gray-800');
+                }
+                document.addEventListener('click', closePlanMenuOutside, true);
+            } else {
+                menu.classList.add('hidden');
+                if (btn) {
+                    btn.classList.remove('bg-indigo-100', 'text-indigo-700');
+                    btn.classList.add('bg-gray-200', 'text-gray-800');
+                }
+                document.removeEventListener('click', closePlanMenuOutside, true);
+            }
+        }
+
+        function closePlanMenuOutside(event) {
+            const menu = document.getElementById('plan-menu-dropdown');
+            const button = document.getElementById('plan-menu-button');
+            if (menu && button && !menu.contains(event.target) && !button.contains(event.target)) {
+                togglePlanMenu(false);
+            }
+        }
+
         function viewNextPlan() {
             if (serverQueuedCount === 0) return;
             // Ask server to dequeue and activate the next plan for this machine
             document.getElementById('view-next-plan-button').disabled = true;
             socket.emit('request_dequeue_plan', { machineName: machineNameHidden.value });
+        }
+
+        function clearActivePlan() {
+            const machineName = machineNameHidden.value;
+            if (!machineName) {
+                showMessageBox('Please connect to a machine first.', 'error');
+                return;
+            }
+            if (currentPlan.length === 0) {
+                showMessageBox('No active plan to clear.', 'info');
+                return;
+            }
+            
+            if (confirm("⚠️ Are you sure you want to CLEAR the active plan sheet?\n\nThis will remove it from the current view and archive it.")) {
+                socket.emit('clear_active_plan', { machineName: machineName });
+            }
         }
 
         // Queued preview modal helpers

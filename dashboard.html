@@ -8,14 +8,24 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
         /* CHANGE 2: Light Sand Background */
-        body { font-family: 'Inter', sans-serif; background-color: #f1f0e7; } /* Changed from #f4f7f9 to light sand */
-        .container { max-width: 1200px; margin: auto; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #f1f0e7; 
+            
+            /* --- ADD YOUR BACKGROUND IMAGE HERE --- */
+            /* Uncomment the line below and replace with your image URL */
+            /* background-image: url('https://images.unsplash.com/photo-1506702315536-73a2a9ac9e61?q=80&w=2070'); */
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed; } /* Changed from #f4f7f9 to light sand */
+        .container { max-width: 100%; margin: auto; }
         /* Grid for chart and totals table */
         .dashboard-grid {
             display: grid;
             grid-template-columns: 1fr;
             gap: 20px;
             margin-bottom: 20px;
+            
         }
         @media (min-width: 900px) {
             .dashboard-grid.analytics-section {
@@ -23,9 +33,35 @@
             }
         }
         .card { 
-            border: none; padding: 20px; border-radius: 12px; 
-            box-shadow: 0 4px 8px rgba(0,0,0,0.05); background-color: white; overflow-x: auto;
+            border: 7px solid rgb(219, 217, 217);
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    width: 100%;
+    background-color: white;
+    overflow-x: auto;
+    transition: all 0.3s ease;
         }
+        .card:hover {
+             box-shadow: 0 12px 25px rgba(0, 0, 0, 0.25);
+    transform: translateY(-5px);
+        }
+        
+        .controls {
+            border: 5px solid rgb(174, 206, 253);
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    width: 100%;
+    background-color: white;
+    transition: all 0.3s ease;
+
+        }
+        .controls:hover {
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.25);
+    transform: translateY(-5px);
+        }
+        
         /* Added max-width to table to ensure it fits in the card on smaller screens */
         #log-table { max-width: 100%; } 
         th, td { white-space: nowrap; }
@@ -82,6 +118,30 @@
             flex-direction: column;
             gap: 10px;
             transform-origin: bottom right;
+            animation: fadeInScale 0.2s ease-out;
+        }
+        
+        /* === STATUS LAYER STYLES === */
+        #status-trigger {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            z-index: 1010;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        #status-trigger:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 15px rgba(59, 130, 246, 0.4);
+        }
+        #status-layer {
+            position: fixed;
+            bottom: 100px;
+            right: 90px;
+            z-index: 1000;
+            width: 300px;
+            max-height: 400px;
+            overflow-y: auto;
             animation: fadeInScale 0.2s ease-out;
         }
         
@@ -185,6 +245,8 @@
     grid-column: 2; /* Forces title to middle column */
     text-align: center;
     white-space: nowrap;
+    color: #3B82F6;
+    
 }
 
 .text-logo .amphenol {
@@ -200,10 +262,15 @@
     margin-left: 58px; /* Aligns Automotive under the 'h' of Amphenol */
     margin-top: -2px;
 }
+.controls {
+    color: #9333ea;
+
+}
+
         /* -------------------------- */
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="p-2 md:p-4">
     <div class="container">
         <div class="header-container">
             <div class="text-logo">
@@ -213,6 +280,37 @@
             <h1 class="text-3xl font-bold text-gray-800">🛠️ Live Production Dashboard</h1>
         </div>
         
+        <!-- Machine Status Layer -->
+        <div id="status-layer" class="hidden bg-white p-4 rounded-xl shadow-2xl border border-gray-200">
+            <div class="flex justify-between items-center border-b pb-2 mb-2">
+                <h3 class="font-bold text-gray-700">Machine Status</h3>
+                <button onclick="toggleStatusLayer()" class="text-gray-400 hover:text-gray-600">&times;</button>
+            </div>
+            <div class="grid grid-cols-3 gap-2 mb-3">
+                <div class="flex flex-col items-center bg-green-50 p-2 rounded border border-green-100">
+                    <span class="text-[10px] font-bold text-green-600 uppercase">Run</span>
+                    <span id="status-count-run" class="text-lg font-black text-green-700">0</span>
+                </div>
+                <div class="flex flex-col items-center bg-red-50 p-2 rounded border border-red-100">
+                    <span class="text-[10px] font-bold text-red-600 uppercase">Down</span>
+                    <span id="status-count-down" class="text-lg font-black text-red-700">0</span>
+                </div>
+                <div class="flex flex-col items-center bg-gray-50 p-2 rounded border border-gray-100">
+                    <span class="text-[10px] font-bold text-gray-500 uppercase">Off</span>
+                    <span id="status-count-off" class="text-lg font-black text-gray-600">0</span>
+                </div>
+            </div>
+            <div id="status-list" class="space-y-2">
+                <p class="text-xs text-gray-500 text-center">Waiting for updates...</p>
+            </div>
+        </div>
+
+        <div id="status-trigger" onclick="toggleStatusLayer()" class="bg-blue-600 text-white p-4 rounded-full shadow-xl" title="View Machine Status">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+            </svg>
+        </div>
+
         <div id="message-modal">
             <div class="modal-header">
                 <h3 class="text-lg font-bold text-purple-700">Send Live Message</h3>
@@ -247,7 +345,7 @@
             </svg>
         </div>
         
-        <div class="card mb-6">
+        <div class="card mb-6 mx-auto" style="width: 100%";>
             <h2 class="text-xl font-semibold text-gray-700 mb-4 border-b pb-2 flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-indigo-500"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
                 Distribute Plan Sheet (Excel)
@@ -284,17 +382,40 @@
             <div id="total-submissions" class="text-lg font-bold text-gray-800">Total Entries Displayed: 0</div>
             <div class="flex items-center gap-5">
     
-    <button onclick="toggleScrapView()" class="relative p-3 bg-red-100 hover:bg-red-200 rounded-xl transition-all border-2 border-red-200 group" title="View Scrap Details">
-        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#B91C1C" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="3 6 5 6 21 6"></polyline>
-            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-            <line x1="10" y1="11" x2="10" y2="17"></line>
-            <line x1="14" y1="11" x2="14" y2="17"></line>
-        </svg>
-        <span id="scrap-badge" class="hidden absolute -top-2 -right-2 bg-red-600 text-white text-[11px] font-black px-2 py-0.5 rounded-full border-2 border-white shadow-md animate-bounce">
-            NEW
-        </span>
-    </button>
+    <button onclick="toggleScrapView()" class="relative p-2 bg-red-100 hover:bg-red-200 rounded-xl transition-all border-2 border-red-200 group flex flex-col items-center w-20" title="View Scrap Details">
+         <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#B91C1C" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+             <polyline points="3 6 5 6 21 6"></polyline>
+             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+             <line x1="10" y1="11" x2="10" y2="17"></line>
+             <line x1="14" y1="11" x2="14" y2="17"></line>
+         </svg>
+         <span class="mt-1 text-xs font-bold text-red-800">SCRAP</span>
+         <span id="scrap-badge" class="hidden absolute -top-2 -right-2 bg-red-600 text-white text-[11px] font-black px-2 py-0.5 rounded-full border-2 border-white shadow-md animate-bounce">
+             NEW
+         </span>
+     </button>
+     <button onclick="toggleDowntimeView()" class="relative p-2 bg-orange-100 hover:bg-orange-200 rounded-xl transition-all border-2 border-orange-200 group flex flex-col items-center w-20" title="View Downtime Details">
+         <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+             <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+         </svg>
+         <span class="mt-1 text-xs font-bold text-orange-800">DOWNTIME</span>
+         <span id="downtime-badge" class="hidden absolute -top-2 -right-2 bg-orange-600 text-white text-[11px] font-black px-2 py-0.5 rounded-full border-2 border-white shadow-md animate-bounce">
+             NEW
+         </span>
+     </button>
+     <button onclick="toggleSubmissionView()" class="relative p-2 bg-blue-100 hover:bg-blue-200 rounded-xl transition-all border-2 border-blue-200 group flex flex-col items-center w-20" title="Toggle Submission Data">
+         <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1E40AF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+             <polyline points="14 2 14 8 20 8"></polyline>
+             <line x1="16" y1="13" x2="8" y2="13"></line>
+             <line x1="16" y1="17" x2="8" y2="17"></line>
+             <polyline points="10 9 9 9 8 9"></polyline>
+         </svg>
+         <span class="mt-1 text-xs font-bold text-blue-800">SUBMISSION</span>
+         <span id="submission-badge" class="hidden absolute -top-2 -right-2 bg-blue-600 text-white text-[11px] font-black px-2 py-0.5 rounded-full border-2 border-white shadow-md animate-bounce">
+             NEW
+         </span>
+     </button>
  </div>
             
             <div class="flex space-x-3 relative"> 
@@ -302,10 +423,11 @@
                 <input type="file" id="stock-sheet" name="stock_sheet" accept=".xlsx,.xls" required style="display: none;">
                 <input type="file" id="consume-sheet" name="consume_sheet" accept=".xlsx,.xls" required style="display: none;">
                 
-                <button type="button" id="consolidated-actions-button" onclick="toggleConsolidatedModal(true)"
+                <button type="button" id="consolidated-actions-button" onclick="toggleConsolidatedModal()"
                         class="bg-purple-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-purple-700 transition duration-150 shadow-md flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
                     More Actions
+                    <svg id="more-actions-arrow" class="ml-1 h-4 w-4 transition-transform duration-200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </button>
                 
                 <div id="consolidated-actions-modal" 
@@ -335,6 +457,11 @@
                         <span class="status-dot" style="background-color: #F97316;"></span> Export Downtime Log (CSV)
                     </button>
                     
+                    <p class="px-3 py-2 text-xs font-semibold uppercase text-gray-500 border-b mt-2 mb-1">Management</p>
+                    <button onclick="handleConsolidatedAction('reset-plans')" 
+                            class="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md flex items-center gap-2">
+                        <span class="status-dot" style="background-color: #EF4444;"></span> Reset Active Plans
+                    </button>
                 </div>
                 
             </div>
@@ -414,7 +541,7 @@
             </div>
         </div>
 
-        <div class="card mt-6">
+        <div id="submission-details-card" class="card mt-6 hidden">
             <h2 class="text-xl font-semibold text-gray-700 mb-4">Submission Details</h2>
             <div class="overflow-x-auto">
                 <table id="log-table" class="min-w-full divide-y divide-gray-200">
@@ -452,31 +579,6 @@
             </div>
         </div>
         
-        <div class="card mt-6">
-            <h2 class="text-xl font-semibold text-gray-700 mb-4">Downtime Submission Details</h2>
-            <div class="overflow-x-auto">
-                <table id="downtime-log-table" class="min-w-full divide-y divide-gray-200">
-                    <thead>
-                        <tr>
-                            <th class="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider text-white">Date</th>
-                            <th class="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider text-white">Shift</th>
-                            <th class="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider text-white">Worker</th>
-                            <th class="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider text-white">Machine</th>
-                            <th class="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider text-white">FG</th>
-                            <th class="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider text-white">Cable</th>
-                            <th class="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider text-white">T1 APL NO</th> <th class="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider text-white">T2 APL NO</th> <th class="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider text-white">Start Time</th>
-                            <th class="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider text-white">End Time</th>
-                            <th class="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider text-white">Total Hours</th>
-                            <th class="py-3 px-4 text-left text-xs font-medium uppercase tracking-wider text-white">Reason</th>
-                        </tr>
-                    </thead>
-                    <tbody id="downtime-log-tbody" class="bg-white divide-y divide-gray-200">
-                        <tr><td colspan="12" class="px-4 py-4 text-sm text-gray-500 text-center">No downtime data available for this date.</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        </div>
         <div id="scrap-modal-window" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
     <div class="bg-white w-full max-w-6xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in duration-200">
         
@@ -528,6 +630,60 @@
     </div>
 </div>
 
+<!-- NEW Downtime Modal Window -->
+<div id="downtime-modal-window" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+    <div class="bg-white w-full max-w-6xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in duration-200">
+        
+        <div class="p-4 bg-orange-600 flex justify-between items-center text-white">
+            <!-- Header -->
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-white/20 rounded-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                </div>
+                <div>
+                    <h2 class="text-lg font-black tracking-tight uppercase">Downtime Records</h2>
+                    <p class="text-[10px] opacity-80 font-bold uppercase tracking-widest">Shopfloor Interruption Log</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="exportDowntimeData()" class="bg-green-500 hover:bg-green-400 text-white text-[11px] font-black py-2 px-4 rounded-lg flex items-center gap-2 transition-all shadow-lg">
+                    📥 EXPORT EXCEL
+                </button>
+                <button onclick="closeDowntimeModal()" class="hover:bg-black/20 p-2 rounded-full transition-all text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="flex-1 overflow-auto p-4 bg-gray-50">
+            <table id="downtime-log-table" class="min-w-full bg-white rounded-xl overflow-hidden shadow-sm">
+                <thead class="sticky top-0 bg-gray-800 text-white">
+                    <tr>
+                        <th class="p-3 text-left text-[10px] font-black uppercase tracking-wider">Date</th>
+                        <th class="p-3 text-left text-[10px] font-black uppercase tracking-wider">Shift</th>
+                        <th class="p-3 text-left text-[10px] font-black uppercase tracking-wider">Worker</th>
+                        <th class="p-3 text-left text-[10px] font-black uppercase tracking-wider">Machine</th>
+                        <th class="p-3 text-left text-[10px] font-black uppercase tracking-wider">FG</th>
+                        <th class="p-3 text-left text-[10px] font-black uppercase tracking-wider">Cable</th>
+                        <th class="p-3 text-left text-[10px] font-black uppercase tracking-wider">T1 Part No</th>
+                        <th class="p-3 text-left text-[10px] font-black uppercase tracking-wider">T1 APL NO</th>
+                        <th class="p-3 text-left text-[10px] font-black uppercase tracking-wider">T2 Part No</th>
+                        <th class="p-3 text-left text-[10px] font-black uppercase tracking-wider">T2 APL NO</th>
+                        <th class="p-3 text-left text-[10px] font-black uppercase tracking-wider">Start Time</th>
+                        <th class="p-3 text-left text-[10px] font-black uppercase tracking-wider">End Time</th>
+                        <th class="p-3 text-left text-[10px] font-black uppercase tracking-wider">Total Hours</th>
+                        <th class="p-3 text-left text-[10px] font-black uppercase tracking-wider">Reason</th>
+                    </tr>
+                </thead>
+                <tbody id="downtime-log-tbody" class="divide-y divide-gray-100"></tbody>
+            </table>
+        </div>
+        <div class="p-3 bg-gray-100 border-t flex justify-center">
+            <button onclick="closeDowntimeModal()" class="px-8 py-2 bg-gray-800 text-white rounded-full text-xs font-black tracking-widest hover:bg-black transition-all">CLOSE WINDOW</button>
+        </div>
+    </div>
+</div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
     <script>
@@ -574,8 +730,8 @@
 
         // --- Machine List ---
         const machineList = [ 
-            "AUM-001", "AUM-002", "AUM-003", "AUM-005", 
-            "AUM-009", "AUM-010", "AUM-011", "AUM-012", "AUM-013" 
+            "AUM-002", "AUM-003", "AUM-009", "AUM-001", 
+            "AUM-010", "AUM-005", "AUM-011", "AUM-012" 
         ];
         
         // --- NEW: Inline Cable ID Search Handlers (Unchanged logic) ---
@@ -776,11 +932,18 @@
         
         // --- NEW: Consolidated Modal Toggler ---
         function toggleConsolidatedModal(show) {
+            const arrowIcon = document.getElementById('more-actions-arrow');
+            if (show === undefined) {
+                show = consolidatedModal.classList.contains('hidden');
+            }
+            
             if (show) {
                 consolidatedModal.classList.remove('hidden');
+                if (arrowIcon) arrowIcon.classList.add('rotate-180');
                 document.addEventListener('click', closeConsolidatedModalOutside, true);
             } else {
                 consolidatedModal.classList.add('hidden');
+                if (arrowIcon) arrowIcon.classList.remove('rotate-180');
                 document.removeEventListener('click', closeConsolidatedModalOutside, true);
             }
         }
@@ -812,6 +975,11 @@
                     break;
                 case 'export-downtime':
                     exportDowntimeData(); 
+                    break;
+                case 'reset-plans':
+                    if(confirm("⚠️ RESET ACTIVE PLANS?\n\nThis will archive all currently active plan sheets and clear them from the worker views.\n\nUse this at the end of the day/shift to start fresh.")) {
+                        socket.emit('reset_active_plans');
+                    }
                     break;
                 default:
                     console.error("Unknown action type:", type);
@@ -865,8 +1033,27 @@
 
         // --- Data Update Handler (UPDATED TOTALS LOGIC) ---
         function updateDisplay(data) {
+            const oldLogLength = latestLogData.length;
             latestLogData = data.log; 
-            initialCableStock = data.initial_stock || {}; 
+            initialCableStock = data.initial_stock || {};
+
+            // New submission check
+            if (data.log.length > oldLogLength && oldLogLength > 0) { // oldLogLength > 0 prevents badge on first load
+                const badge = document.getElementById('submission-badge');
+                const card = document.getElementById('submission-details-card');
+                if (badge && card && card.classList.contains('hidden')) {
+                    badge.classList.remove('hidden');
+                }
+            }
+
+
+            const newDowntimeLog = data.downtime_log || [];
+            if (newDowntimeLog.length > currentDowntimeLog.length) {
+                const badge = document.getElementById('downtime-badge');
+                if (badge && document.getElementById('downtime-modal-window').classList.contains('hidden')) {
+                    badge.classList.remove('hidden');
+                }
+            }
             currentDowntimeLog = data.downtime_log || []; // Store for export
             
             let logHTML = data.log.length > 0 ? '' : '<tr><td colspan="23" class="px-4 py-4 text-sm text-gray-500 text-center">No production data found for this date.</td></tr>'; 
@@ -947,11 +1134,10 @@
             // currentDowntimeLog is already set in updateDisplay()
 
             if (!downtimeLog || downtimeLog.length === 0) {
-                // COLSPAN UPDATED TO 12 TO MATCH THE 12 COLUMNS IN THE TABLE HEADER
-                downtimeLogTbody.innerHTML = `<tr><td colspan="12" class="px-4 py-4 text-sm text-gray-500 text-center">No downtime data available for this date.</td></tr>`;
+                downtimeLogTbody.innerHTML = `<tr><td colspan="14" class="px-4 py-4 text-sm text-gray-500 text-center">No downtime data available for this date.</td></tr>`;
                 return;
             }
-            
+
             // Helper function to format ISO string to readable date/time
             const formatDate = (isoString) => isoString ? new Date(isoString).toISOString().split('T')[0] : 'N/A';
             const formatTime = (isoString) => isoString ? new Date(isoString).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : 'N/A';
@@ -969,7 +1155,9 @@
                     log.machine_name || 'N/A',
                     log.fg_part_no || 'N/A',
                     log.cable_id || 'N/A',
+                    log.t1_terminal_id || 'N/A',
                     log.t1_apl_no || 'N/A', 
+                    log.t2_terminal_id || 'N/A',
                     log.t2_apl_no || 'N/A', 
                     formatTime(log.start_time),
                     formatTime(log.end_time),
@@ -1287,6 +1475,72 @@
             modalMessageTextarea.value = '';
         }
         
+        function toggleStatusLayer() {
+            const layer = document.getElementById('status-layer');
+            layer.classList.toggle('hidden');
+        }
+
+        socket.on('live_status_update', (statusData) => {
+            const list = document.getElementById('status-list');
+            list.innerHTML = '';
+            
+            let runCount = 0;
+            let downCount = 0;
+            let offCount = 0;
+            
+            if (Object.keys(statusData).length === 0) {
+                list.innerHTML = '<p class="text-xs text-gray-500 text-center">No machines connected.</p>';
+                if(document.getElementById('status-count-run')) document.getElementById('status-count-run').textContent = 0;
+                if(document.getElementById('status-count-down')) document.getElementById('status-count-down').textContent = 0;
+                if(document.getElementById('status-count-off')) document.getElementById('status-count-off').textContent = 0;
+                return;
+            }
+
+            // Sort machines by name
+            const sortedMachines = Object.keys(statusData).sort();
+
+            sortedMachines.forEach(machine => {
+                const info = statusData[machine];
+                let colorClass = 'bg-gray-100 text-gray-600';
+                
+                if (info.status === 'RUNNING') {
+                    colorClass = 'bg-green-100 text-green-700';
+                    runCount++;
+                } else if (info.status === 'DOWNTIME') {
+                    colorClass = 'bg-red-100 text-red-700';
+                    downCount++;
+                } else {
+                    colorClass = 'bg-gray-200 text-gray-500';
+                    offCount++;
+                }
+
+                const item = `
+                    <div class="flex justify-between items-center p-2 rounded hover:bg-gray-50 border border-gray-100">
+                        <span class="font-bold text-sm text-gray-700">${machine}</span>
+                        <span class="text-xs font-bold px-2 py-1 rounded ${colorClass}">${info.status}</span>
+                    </div>
+                `;
+                list.insertAdjacentHTML('beforeend', item);
+            });
+            
+            // Update counts
+            if(document.getElementById('status-count-run')) document.getElementById('status-count-run').textContent = runCount;
+            if(document.getElementById('status-count-down')) document.getElementById('status-count-down').textContent = downCount;
+            if(document.getElementById('status-count-off')) document.getElementById('status-count-off').textContent = offCount;
+            
+            // Update trigger button appearance based on downtime
+            const triggerBtn = document.getElementById('status-trigger');
+            if (triggerBtn) {
+                if (downCount > 0) {
+                    triggerBtn.classList.remove('bg-blue-600');
+                    triggerBtn.classList.add('bg-red-600', 'animate-pulse');
+                } else {
+                    triggerBtn.classList.add('bg-blue-600');
+                    triggerBtn.classList.remove('bg-red-600', 'animate-pulse');
+                }
+            }
+        });
+        
         // --- Socket.IO Connection and Events (FIXED) ---
         // FIX: The initial data request is now handled here, guaranteeing the socket is connected.
         socket.on('connect', () => {
@@ -1295,7 +1549,15 @@
              requestDataForDate(); 
              // Also request the latest machine status to populate dropdowns
              socket.emit('request_machine_status');
+             socket.emit('request_live_status');
         });
+
+        // Auto-refresh machine status every 10 seconds
+        setInterval(() => {
+            if (socket.connected) {
+                socket.emit('request_live_status');
+            }
+        }, 10000);
 
         socket.on('update_dashboard', (data) => {
             updateDisplay(data);
@@ -1307,6 +1569,10 @@
              } else {
                  showMessageStatus(`Failed to send message to ${data.machineName}: ${data.reason}`, 'text-red-600');
              }
+        });
+
+        socket.on('reset_plans_confirmed', (data) => {
+            alert(data.message);
         });
         
         socket.on('update_machine_status', (data) => {
@@ -1335,6 +1601,17 @@ function toggleScrapView() {
 function closeScrapModal() {
     document.getElementById('scrap-modal-window').classList.add('hidden');
 }
+
+// NEW: Downtime Modal Functions
+function toggleDowntimeView() {
+    document.getElementById('downtime-modal-window').classList.remove('hidden');
+    document.getElementById('downtime-badge').classList.add('hidden'); // Clear "NEW" badge
+}
+
+function closeDowntimeModal() {
+    document.getElementById('downtime-modal-window').classList.add('hidden');
+}
+
 
 // 3. Listen for Data (Ensure event name matches worker side)
 let lastScrapTimestamp = ""; // To prevent duplicates
@@ -1412,6 +1689,22 @@ function exportScrapToExcel() {
     XLSX.utils.book_append_sheet(wb, ws, "ScrapLog");
     XLSX.writeFile(wb, "Scrap_Report.xlsx");
 }
+
+// 6. Toggle Submission Details View
+function toggleSubmissionView() {
+    const element = document.getElementById('submission-details-card');
+    const badge = document.getElementById('submission-badge');
+    if (element) {
+        const isHidden = element.classList.contains('hidden');
+        element.classList.toggle('hidden');
+        if (isHidden) { // If it was hidden and now is not
+            if (badge) badge.classList.add('hidden'); // Hide badge on view
+            element.scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+}
     </script>
 </body>
+</html>
+</html>
 </html>

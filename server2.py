@@ -1,14 +1,8 @@
 from flask import Flask, render_template_string, redirect, url_for, Response, request, jsonify
 from flask_socketio import SocketIO, join_room, leave_room
-try:
-    import eventlet
-except ImportError:
-    print("Warning: eventlet is not installed. WebSocket support may be unavailable.")
-from datetime import datetime, timedelta
-try:
-    import pandas as pd
-except ImportError:
-    print("Warning: pandas is not installed. Data processing will fail.")
+import eventlet
+from datetime import datetime
+import pandas as pd
 from collections import defaultdict
 import io
 import csv
@@ -615,46 +609,6 @@ def export_downtime_all():
 
 # --- Socket.IO Event Handlers ---
 
-def calculate_machine_stats(machine_name):
-    """Calculates total production quantity and downtime hours for a machine for the current day."""
-    today = datetime.now().date()
-    
-    # Initialize stats for all shifts
-    stats = {
-        'A': {'qty': 0, 'downtime': 0.0},
-        'B': {'qty': 0, 'downtime': 0.0},
-        'C': {'qty': 0, 'downtime': 0.0},
-        'total': {'qty': 0, 'downtime': 0.0}
-    }
-    
-    for entry in SUBMISSION_LOG:
-        if entry.get('machine_name') == machine_name:
-            entry_dt = entry.get('datetime')
-            if entry_dt and entry_dt.date() == today:
-                shift = entry.get('shift', '').upper()
-                try:
-                    qty = int(entry.get('produced_qty', 0))
-                    if shift in stats:
-                        stats[shift]['qty'] += qty
-                    stats['total']['qty'] += qty
-                except (ValueError, TypeError):
-                    pass
-
-    for entry in DOWNTIME_LOG:
-        if entry.get('machine_name') == machine_name:
-            st = entry.get('start_time')
-            if st and st.date() == today:
-                shift = entry.get('shift', '').upper()
-                try:
-                    dt = float(entry.get('total_hours', 0.0))
-                    if shift in stats:
-                        stats[shift]['downtime'] += dt
-                    stats['total']['downtime'] += dt
-                except (ValueError, TypeError):
-                    pass
-    
-    return stats
-
 @socketio.on('submit_output')
 def handle_submit_output(data):
     try:
@@ -662,11 +616,6 @@ def handle_submit_output(data):
         SUBMISSION_LOG.append(data)
         save_production_log(SUBMISSION_LOG)
         broadcast_data(data['datetime'].strftime('%Y-%m-%d')) 
-        
-        # Update stats for the machine
-        stats = calculate_machine_stats(data['machine_name'])
-        socketio.emit('update_machine_stats', stats, room=data['machine_name'])
-        
         socketio.emit('submission_success', {'success': True}, room=request.sid)
 
     except KeyError as e:
@@ -712,11 +661,6 @@ def handle_submit_downtime(data):
         DOWNTIME_LOG.append(downtime_entry)
         save_downtime_data(DOWNTIME_LOG) # Save to file
         broadcast_data(start_time.strftime('%Y-%m-%d')) # Broadcast data for the relevant day
-        
-        # Update stats for the machine
-        stats = calculate_machine_stats(data.get('machine_name'))
-        socketio.emit('update_machine_stats', stats, room=data.get('machine_name'))
-        
         socketio.emit('downtime_submission_success', {'success': True}, room=request.sid)
 
     except KeyError as e:
@@ -786,10 +730,6 @@ def handle_join_machine_room(data):
     # Send current queued count for this machine to the connecting client
     queued_count = len(MACHINE_PLAN_QUEUES.get(machine_name, []))
     socketio.emit('queued_plan_count', {'count': queued_count, 'machineName': machine_name}, room=request.sid)
-    
-    # Send current daily stats
-    stats = calculate_machine_stats(machine_name)
-    socketio.emit('update_machine_stats', stats, room=request.sid)
 
     socketio.emit('join_confirm', {'success': True, 'machineName': machine_name}, room=request.sid)
 
@@ -819,12 +759,8 @@ def handle_mark_plan_complete(data):
         if shift_to_mark:
             # Case 1: A specific shift (A, B, or C) was marked
             shift_status_key = f'status_{shift_to_mark.lower()}'
+            target_item[shift_status_key] = 'completed'
             
-            # Toggle logic: If currently completed, set to pending; otherwise set to completed
-            current_status = target_item.get(shift_status_key)
-            new_status = 'pending' if current_status == 'completed' else 'completed'
-            target_item[shift_status_key] = new_status
-
             # Check if all relevant shifts for this line are now complete
             all_shifts_done = True
             has_any_shift_column = False
@@ -842,8 +778,6 @@ def handle_mark_plan_complete(data):
             
             if has_any_shift_column and all_shifts_done:
                 target_item['status'] = 'completed'
-            else:
-                target_item['status'] = 'pending'
         else:
             # Case 2: The main "Mark Done" button was clicked, complete the whole line
             target_item['status'] = 'completed'
@@ -892,90 +826,6 @@ def handle_send_live_message(data):
     else:
          socketio.emit('message_sent_confirm', {'success': False, 'machineName': target_machine, 'reason': 'Machine is currently offline or not connected.'}, room=request.sid)
 
-@socketio.on('reset_active_plans')
-def handle_reset_active_plans():
-    """Resets all active plans for the end of the day, archiving them first."""
-    timestamp = datetime.now().isoformat()
-    
-    # Archive active plans and notify workers
-    for machine_name, plan in MACHINE_PLANS.items():
-        if plan:
-            history = MACHINE_PLAN_HISTORY.setdefault(machine_name, [])
-            history.append({
-                'archived_at': timestamp,
-                'plan': plan,
-                'reason': 'End of Day Reset'
-            })
-        # Notify workers that the plan is cleared
-        socketio.emit('update_worker_plan', {'plan': [], 'machineName': machine_name}, room=machine_name)
-
-    MACHINE_PLANS.clear()
-    save_machine_state(MACHINE_PLANS, MACHINE_PLAN_QUEUES, MACHINE_PLAN_HISTORY)
-    
-    # Update dashboard and confirm
-    broadcast_data(datetime.now().strftime('%Y-%m-%d'))
-    socketio.emit('reset_plans_confirmed', {'message': '✅ All active plans have been reset and archived for the day.'}, room=request.sid)
-
-@socketio.on('request_quantity_for_timeframe')
-def handle_request_quantity_for_timeframe(data):
-    """Calculates the total produced quantity for a given machine and time range."""
-    machine_name = data.get('machineName')
-    start_time_str = data.get('startTime')
-    end_time_str = data.get('endTime')
-
-    if not all([machine_name, start_time_str, end_time_str]):
-        return
-
-    try:
-        # Client sends UTC ISO strings. Convert them to datetime objects.
-        start_time_utc = datetime.fromisoformat(start_time_str.replace('Z', '+00:00'))
-        end_time_utc = datetime.fromisoformat(end_time_str.replace('Z', '+00:00'))
-
-        # Convert incoming UTC times to the server's local timezone, then make them naive
-        # for comparison with the naive datetimes stored in SUBMISSION_LOG.
-        start_time_naive = start_time_utc.astimezone(None).replace(tzinfo=None)
-        end_time_naive = end_time_utc.astimezone(None).replace(tzinfo=None)
-    except (ValueError, TypeError) as e:
-        print(f"Error parsing timeframe dates: {e}")
-        return
-
-    total_qty = 0
-    for entry in SUBMISSION_LOG:
-        entry_dt = entry.get('datetime') # This is a naive datetime object
-        if (entry.get('machine_name') == machine_name and entry_dt and start_time_naive <= entry_dt < end_time_naive):
-            try:
-                total_qty += int(entry.get('produced_qty', 0))
-            except (ValueError, TypeError):
-                pass
-
-    socketio.emit('quantity_for_timeframe_response', {'machineName': machine_name, 'totalQty': total_qty}, room=request.sid)
-
-@socketio.on('check_qty_last_hours')
-def handle_check_qty_last_hours(data):
-    """Calculates total produced quantity for the last N hours."""
-    machine_name = data.get('machineName')
-    try:
-        hours = int(data.get('hours'))
-    except (ValueError, TypeError):
-        return
-
-    if not machine_name:
-        return
-
-    # Calculate start time (now - hours)
-    start_time = datetime.now() - timedelta(hours=hours)
-    
-    total_qty = 0
-    for entry in SUBMISSION_LOG:
-        if entry.get('machine_name') == machine_name:
-            entry_dt = entry.get('datetime')
-            if entry_dt and entry_dt >= start_time:
-                try:
-                    total_qty += int(entry.get('produced_qty', 0))
-                except (ValueError, TypeError):
-                    pass
-    
-    socketio.emit('qty_last_hours_result', {'hours': hours, 'totalQty': total_qty}, room=request.sid)
 
 @socketio.on('request_dashboard_data')
 def handle_request_dashboard_data(data):
@@ -1014,41 +864,6 @@ def handle_request_dequeue_plan(data):
     # Inform workers about the updated queue size
     socketio.emit('queued_plan_count', {'count': len(queue), 'machineName': machine_name}, room=machine_name)
 
-@socketio.on('request_current_plan')
-def handle_request_current_plan(data):
-    """Re-sends the currently active plan to the requesting worker."""
-    machine_name = data.get('machineName')
-    if not machine_name:
-        return
-
-    current_plan = MACHINE_PLANS.get(machine_name, [])
-    # Send the plan back only to the client that requested it.
-    socketio.emit('update_worker_plan', {'plan': current_plan, 'machineName': machine_name}, room=request.sid)
-
-@socketio.on('clear_active_plan')
-def handle_clear_active_plan(data):
-    """Clears the currently active plan for a machine manually."""
-    machine_name = data.get('machineName')
-    if not machine_name:
-        return
-
-    if machine_name in MACHINE_PLANS:
-        current_plan = MACHINE_PLANS[machine_name]
-        # Archive if there is a plan
-        if current_plan:
-            history = MACHINE_PLAN_HISTORY.setdefault(machine_name, [])
-            history.append({
-                'archived_at': datetime.now().isoformat(),
-                'plan': current_plan,
-                'reason': 'Manual Clear'
-            })
-            socketio.emit('plan_history_update', {'history': history, 'machineName': machine_name}, room=machine_name)
-
-        MACHINE_PLANS[machine_name] = []
-        save_machine_state(MACHINE_PLANS, MACHINE_PLAN_QUEUES, MACHINE_PLAN_HISTORY)
-        
-        socketio.emit('update_worker_plan', {'plan': [], 'machineName': machine_name}, room=machine_name)
-        socketio.emit('plan_cleared', {'message': 'Active plan sheet cleared.'}, room=request.sid)
 
 @socketio.on('request_plan_history')
 def handle_request_plan_history(data):
@@ -1061,18 +876,6 @@ def handle_request_plan_history(data):
     # Send only to the requesting client (not broadcast to room)
     socketio.emit('plan_history', {'history': history, 'machineName': machine_name}, room=request.sid)
 
-@socketio.on('delete_plan_history_entry')
-def handle_delete_plan_history_entry(data):
-    """Deletes a specific archived plan from history."""
-    machine_name = data.get('machineName')
-    index = data.get('index')
-    
-    if machine_name in MACHINE_PLAN_HISTORY:
-        history = MACHINE_PLAN_HISTORY[machine_name]
-        if isinstance(index, int) and 0 <= index < len(history):
-            del history[index]
-            save_machine_state(MACHINE_PLANS, MACHINE_PLAN_QUEUES, MACHINE_PLAN_HISTORY)
-            socketio.emit('plan_history_update', {'history': history, 'machineName': machine_name}, room=machine_name)
 
 @socketio.on('request_queued_plans')
 def handle_request_queued_plans(data):
